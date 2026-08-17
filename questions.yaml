@@ -77,9 +77,16 @@ obligatoires:
   - cle: souvenir
     role: ancre la plus forte + message aux mariés
     type: texte_long
-    question: Un souvenir avec les mariés, une image qui te revient ?
+    prealable:
+      cle: souvenir_avec
+      question: Ce souvenir, c'est avec…
+      options:
+        - "{mariee}"
+        - "{marie}"
+        - Les deux
+    question: Un souvenir, une image qui vous revient ?
     exemple: ce qui te vient, même court. C'est ce qu'ils liront.
-    limite: 200
+    limite: 300
 
 # --- Second étage : six questions bonus ------------------------------------
 
@@ -89,8 +96,8 @@ bonus:
     type: boutons
     question: Comment connais-tu les mariés ?
     options:
-      - Famille de la mariée
-      - Famille du marié
+      - "Famille de {mariee}"
+      - "Famille de {marie}"
       - Ami d'enfance
       - Collègue
       - Voisinage
@@ -134,9 +141,10 @@ bonus:
     limite: 80
 
   - cle: souhait
-    role: matière de l'épilogue
+    role: montré tel quel aux mariés à la révélation
+    usage: revelation
     type: texte_long
-    question: Que souhaites-tu aux mariés ?
+    question: Que souhaites-tu à {mariee} et {marie} ?
     exemple: une phrase suffit
     limite: 200
 
@@ -157,13 +165,43 @@ contrat: |
      une forte (le métier ou l'objet).
   3. N'écris JAMAIS un nom propre réel. Aucun prénom, aucun nom de famille,
      aucun nom de commune du monde réel. Le personnage n'a que son nom fictif.
+     Cela vaut aussi pour les prénoms des mariés : ils te sont donnés pour
+     comprendre les réponses, jamais pour être écrits. Dans le texte, les
+     mariés sont « les deux fiancés », « celle qu'on célèbre », « le futur
+     époux » — jamais nommés.
   4. Aucun trait physique : ni taille, ni poids, ni cheveux, ni âge.
   5. Si l'allégeance est l'Ombre, le personnage est grandiose, inquiétant,
      parfois comique — jamais méchant, jamais humiliant. C'est un cadeau de
      mariage, pas une pique.
+     L'allégeance **peut être nommée**, et elle mérite de l'être quand elle
+     détonne : un homme du Rohan au service de l'Ombre, une contradiction
+     pareille est un ressort, pas une gêne — exploite-la.
+     En revanche, **elle ne se pose jamais à plat**, et surtout pas en fin de
+     portrait. Sont interdites les chutes du type « ce soir, il sert la
+     Lumière » ou « il sert l'Ombre, avec la rigueur d'un forgeron » : une
+     étiquette collée après coup n'apprend rien. Fais-la vivre dans l'action —
+     ce qu'il fréquente, ce qu'il tait, à qui il rend des comptes.
   6. Le souvenir avec les mariés doit être transposé, pas recopié : il devient
      une scène vécue en Terre du Milieu.
-  7. Français, 150 mots maximum, à la troisième personne, ton de chronique.
+  7. **Le lien avec les mariés a sa place dans le portrait, mais transposé.**
+     N'emploie aucun terme du monde réel — ni beau-frère, ni belle-sœur, ni
+     cousin, ni collègue, ni voisin : ces mots-là appartiennent à l'indice.
+     Dis la même chose avec les mots de la Terre du Milieu : « celle qui devint
+     sœur de son épouse », « ceux de sa parenté », « ceux avec qui il partage
+     l'établi ». Le lien doit se comprendre sans qu'un mot du monde réel soit
+     prononcé.
+  8. **Utilise toutes les réponses données, mais jamais dans le même ordre.**
+     Chaque réponse est une prise pour deviner : en écarter une, c'est retirer
+     une chance aux mariés. En revanche, ne déroule pas le questionnaire de
+     haut en bas — les portraits se liront à la suite et le gabarit sauterait
+     aux yeux. Change de point d'entrée à chaque fois : une scène en cours, un
+     objet posé là, une réputation qui court, une phrase entendue au détour
+     d'un couloir. Une réponse peut être portée par une image plutôt que par
+     une phrase qui la décrit.
+     **Ne termine jamais deux portraits de la même façon.** En particulier, ne
+     finis pas sur les vœux aux mariés : ce serait le gabarit le plus visible
+     de tous, et ces vœux sont de toute façon réservés à l'épilogue.
+  9. Français, 150 mots maximum, à la troisième personne, ton de chronique.
 
   LE PEUPLE
   Tu le déduis de l'ensemble des réponses, sans jamais le dire à la première
@@ -182,7 +220,8 @@ contrat: |
   L'INDICE
   Une seule phrase, destinée aux mariés s'ils sont bloqués. Elle oriente sans
   livrer la réponse : elle désigne le domaine de la vie de la personne, jamais
-  son identité.
+  son identité. C'est ici — et nulle part ailleurs — que le lien avec les
+  mariés peut être évoqué, s'il est connu.
 
   SORTIE
   Uniquement un objet JSON, sans texte autour, sans balises de code :

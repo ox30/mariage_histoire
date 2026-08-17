@@ -245,7 +245,8 @@ def questions_bonus(request: Request, identifiant: str):
 @app.post("/bonus/{identifiant}")
 async def enregistrer_bonus(request: Request, identifiant: str):
     donnees = dict(await request.form())
-    reponses = {} if donnees.get("sortie") else _reponses_du_formulaire(donnees, "bonus")
+    passe = donnees.get("suite") == "sortie"
+    reponses = {} if passe else _reponses_du_formulaire(donnees, "bonus")
     bd.ajouter_bonus(identifiant, reponses)
     _lancer_generation(identifiant)
     return RedirectResponse(f"/portrait/{identifiant}", status_code=303)
@@ -263,12 +264,18 @@ def fin(request: Request):
 @app.get("/deviner", response_class=HTMLResponse)
 def deviner(request: Request, _: str = Depends(admin)):
     """La page à montrer à quelqu'un qui connaît les participants."""
-    participations = [p for p in bd.lister() if p["portrait"]]
     par_lieu: dict[str, list] = {}
-    for p in participations:
-        par_lieu.setdefault(p["lieu"], []).append(p)
+    for p in bd.lister():
+        if not p["portrait"]:
+            continue
+        ligne = dict(p)
+        # Le souvenir et le vœu sont montrés tels quels : la voix de la
+        # personne vaut mieux que sa transposition, une fois qu'on l'a devinée.
+        ligne["reponses"] = json.loads(p["reponses_json"])
+        par_lieu.setdefault(p["lieu"], []).append(ligne)
+    total = sum(len(v) for v in par_lieu.values())
     return gabarits.TemplateResponse(
-        "deviner.html", {"request": request, "par_lieu": par_lieu, "total": len(participations)}
+        "deviner.html", {"request": request, "par_lieu": par_lieu, "total": total}
     )
 
 

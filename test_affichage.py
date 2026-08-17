@@ -44,3 +44,15 @@ assert ia.verifier_noms("Elwen la guérisseuse", ["Marie"]) == []
 assert ia.verifier_noms("il vit Jean-Pierre", ["Jean-Pierre"]) == ["Jean-Pierre"]
 assert ia.verifier_noms("il vit Pierre", ["Jean-Pierre"]) == ["Jean-Pierre"]
 print("TOUT PASSE")
+
+# --- Révélation : souvenir et vœu montrés tels quels -------------------------
+uid2 = bd.creer("Jo", "Test", {"souvenir": "on a raté le dernier train",
+                               "souhait": "plein de belles choses"},
+                main.CONFIG["lieux"])
+bd.enregistrer_portrait(uid2, {"nom_fictif": "Thorald", "peuple": "nain",
+                               "portrait": "p", "indice": "i", "fuites_noms": []})
+r = c.get("/deviner", headers=auth)
+assert "on a raté le dernier train" in r.text, "souvenir brut à la révélation"
+assert "plein de belles choses" in r.text, "vœu brut à la révélation"
+assert "Ce qu'il ou elle vous souhaite" in r.text
+print("TOUT PASSE (bis)")

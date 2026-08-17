@@ -66,22 +66,42 @@ def _construire_message(config: dict, participation: dict) -> str:
         "RÉPONSES DE LA PERSONNE :",
     ]
     reponses = participation["reponses"]
+    pour_portrait, pour_indice = [], []
     obligatoires_donnees = 0
     for bloc in ("obligatoires", "bonus"):
         for q in config[bloc]:
+            usage = q.get("usage", "portrait")
+            # `revelation` : la réponse n'atteint jamais le modèle. Elle est
+            # montrée telle quelle aux mariés, dans la voix de la personne.
+            # Une donnée absente ne peut pas être mal employée ; une consigne,
+            # si. Elle peut d'ailleurs contenir des prénoms réels.
+            if usage == "revelation":
+                continue
+            cible = pour_indice if usage == "indice" else pour_portrait
             prealable = q.get("prealable")
             if prealable and reponses.get(prealable["cle"]):
-                lignes.append(f"- {prealable['question']} → {reponses[prealable['cle']]}")
+                cible.append(f"- {prealable['question']} → {reponses[prealable['cle']]}")
             valeur = reponses.get(q["cle"])
             if valeur:
-                lignes.append(f"- {q['question']} → {valeur}")
-                if bloc == "obligatoires":
+                cible.append(f"- {q['question']} → {valeur}")
+                if bloc == "obligatoires" and usage == "portrait":
                     obligatoires_donnees += 1
+
+    lignes += pour_portrait
+    if pour_indice:
+        lignes += [
+            "",
+            "RÉSERVÉ À L'INDICE — interdit dans le portrait :",
+            *pour_indice,
+        ]
 
     # La règle d'usage dépend du volume reçu : six réponses tiennent toutes en
     # 150 mots, douze non. Les six premières restent obligatoires dans les deux
     # cas — ce sont les ancres les plus fortes.
-    bonus_donnees = sum(1 for q in config["bonus"] if reponses.get(q["cle"]))
+    bonus_donnees = sum(
+        1 for q in config["bonus"]
+        if reponses.get(q["cle"]) and q.get("usage", "portrait") == "portrait"
+    )
     if bonus_donnees:
         lignes += [
             "",
