@@ -61,7 +61,10 @@ def _construire_message(config: dict, participation: dict) -> str:
         ]
     lignes += [
         f"LIEU DÉJÀ ASSIGNÉ PAR LE SERVEUR : {participation['lieu']}",
-        "(le personnage y a été convoqué, il ne l'a pas choisi)",
+        "C'est le décor du portrait, pas son sujet. Le personnage y a été",
+        "convoqué et ne l'a pas choisi — mais n'ouvre pas le portrait sur cette",
+        "convocation : commence par le personnage, son geste ou sa réputation,",
+        "et laisse le lieu apparaître en cours de route.",
         "",
         "RÉPONSES DE LA PERSONNE :",
     ]

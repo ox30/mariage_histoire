@@ -194,6 +194,8 @@ assert "5 complémentaires" in msg, msg[-400:]
 contrat = main.CONFIG["contrat"]
 for regle in ("peut être nommée", "elle ne se pose jamais à plat",
               "a sa place dans le portrait, mais transposé",
-              "gabarit le plus visible"):
+              "Ne commence ni ne termine jamais", "cette limite est ferme"):
     assert regle in contrat, regle
+assert "n'ouvre pas le portrait sur cette" in msg, "consigne d'ouverture transmise"
+assert "décor du portrait, pas son sujet" in msg
 print("TOUT PASSE (5)")
