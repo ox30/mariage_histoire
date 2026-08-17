@@ -43,9 +43,9 @@
       {% endif %}
 
       {% if not loop.first %}
-        <button type="button" class="retour">← Revenir</button>
+        <button type="button" class="retour" data-arriere>← Revenir</button>
       {% elif facultatif %}
-        <button type="submit" class="retour" name="sortie" value="1">
+        <button type="submit" class="retour envoi" data-suite="sortie">
           Créer mon personnage sans ces questions
         </button>
       {% endif %}
@@ -54,23 +54,29 @@
 
     <section class="ecran" data-index="{{ questions|length }}">
       <p class="compteur-question">C'est tout</p>
+      <input type="hidden" name="suite" id="champ-suite" value="maintenant">
       {% if bifurcation %}
         <p class="question">Le Conseil peut délibérer.</p>
         <p class="exemple">Ou vous pouvez en dire plus : six questions de plus,
            et votre chronique sera plus riche — les mariés auront davantage à
            deviner.</p>
-        <button type="submit" class="action" id="envoyer" name="suite" value="maintenant">
+        <button type="submit" class="action envoi" data-suite="maintenant"
+                data-attente="Le Conseil délibère…">
           Créer mon personnage
         </button>
-        <button type="submit" class="action sobre" name="suite" value="bonus">
+        <button type="submit" class="action sobre envoi" data-suite="bonus"
+                data-attente="Encore six questions…">
           Six questions de plus
         </button>
       {% else %}
         <p class="question">Le Conseil peut délibérer.</p>
         <p class="exemple">Comptez une dizaine de secondes pour la réponse.</p>
-        <button type="submit" class="action" id="envoyer">Envoyer mes réponses</button>
+        <button type="submit" class="action envoi" data-suite="maintenant"
+                data-attente="Le Conseil délibère…">
+          Envoyer mes réponses
+        </button>
       {% endif %}
-      <button type="button" class="retour">← Revenir</button>
+      <button type="button" class="retour" data-arriere>← Revenir</button>
     </section>
   </div>
 </form>
@@ -147,7 +153,7 @@
     suivant.addEventListener("click", avancer);
   });
 
-  document.querySelectorAll(".retour").forEach(function (bouton) {
+  document.querySelectorAll("[data-arriere]").forEach(function (bouton) {
     bouton.addEventListener("click", function () { afficher(courant - 1); });
   });
 
@@ -157,13 +163,20 @@
     document.querySelectorAll(".suivant").forEach(function (b) { b.disabled = false; });
   }
 
-  // Un seul envoi possible : sur 4G, un double clic produirait deux portraits.
+  // Le choix passe par un champ caché, pas par la valeur du bouton : un bouton
+  // désactivé n'envoie pas toujours sa valeur, et on désactive justement tout
+  // à l'envoi pour empêcher le double clic sur 4G.
+  document.querySelectorAll(".envoi").forEach(function (bouton) {
+    bouton.addEventListener("click", function () {
+      document.getElementById("champ-suite").value = bouton.dataset.suite;
+      if (bouton.dataset.attente) { bouton.textContent = bouton.dataset.attente; }
+    });
+  });
+
   document.getElementById("formulaire").addEventListener("submit", function () {
     document.querySelectorAll("#formulaire button[type=submit]").forEach(function (b) {
       b.disabled = true;
     });
-    var envoyer = document.getElementById("envoyer");
-    if (envoyer) { envoyer.textContent = "Le Conseil délibère…"; }
   });
 
   afficher(0);

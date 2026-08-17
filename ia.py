@@ -48,18 +48,55 @@ def verifier_noms(texte: str, noms_interdits: list[str]) -> list[str]:
 
 def _construire_message(config: dict, participation: dict) -> str:
     """Assemble les réponses en un bloc lisible pour le modèle."""
-    lignes = [
+    couple = participation.get("couple") or {}
+    lignes = []
+    if couple:
+        lignes += [
+            "LES MARIÉS (pour ta compréhension seulement, à ne jamais écrire) :",
+            f"- la mariée s'appelle {couple.get('mariee')}",
+            f"- le marié s'appelle {couple.get('marie')}",
+            "Si la personne a mal orthographié l'un de ces prénoms, comprends-le",
+            "sans le relever et sans le reproduire.",
+            "",
+        ]
+    lignes += [
         f"LIEU DÉJÀ ASSIGNÉ PAR LE SERVEUR : {participation['lieu']}",
         "(le personnage y a été convoqué, il ne l'a pas choisi)",
         "",
         "RÉPONSES DE LA PERSONNE :",
     ]
     reponses = participation["reponses"]
+    obligatoires_donnees = 0
     for bloc in ("obligatoires", "bonus"):
         for q in config[bloc]:
+            prealable = q.get("prealable")
+            if prealable and reponses.get(prealable["cle"]):
+                lignes.append(f"- {prealable['question']} → {reponses[prealable['cle']]}")
             valeur = reponses.get(q["cle"])
             if valeur:
                 lignes.append(f"- {q['question']} → {valeur}")
+                if bloc == "obligatoires":
+                    obligatoires_donnees += 1
+
+    # La règle d'usage dépend du volume reçu : six réponses tiennent toutes en
+    # 150 mots, douze non. Les six premières restent obligatoires dans les deux
+    # cas — ce sont les ancres les plus fortes.
+    bonus_donnees = sum(1 for q in config["bonus"] if reponses.get(q["cle"]))
+    if bonus_donnees:
+        lignes += [
+            "",
+            f"VOLUME REÇU : {obligatoires_donnees} réponses principales et "
+            f"{bonus_donnees} complémentaires. Les principales doivent toutes "
+            "être exploitées ; parmi les complémentaires, retiens celles qui "
+            "donnent le plus de relief et laisse les autres.",
+        ]
+    else:
+        lignes += [
+            "",
+            f"VOLUME REÇU : {obligatoires_donnees} réponses, sans complément. "
+            "Exploite-les toutes : chacune est une prise pour deviner.",
+        ]
+
     lignes += [
         "",
         "NOMS RÉELS STRICTEMENT INTERDITS EN SORTIE :",
@@ -81,7 +118,10 @@ def generer(config: dict, participation: dict) -> dict:
     modele = os.environ.get("MODELE_IA", MODELE_DEFAUT)
     corps = {
         "model": modele,
-        "max_tokens": 1200,
+        # 150 mots de portrait plus les trois autres champs tournent autour de
+        # 700 jetons ; 1200 laissait le modèle se faire couper en pleine phrase,
+        # ce qui produisait un JSON tronqué et donc illisible.
+        "max_tokens": 2500,
         "system": config["contrat"],
         "messages": [{"role": "user", "content": _construire_message(config, participation)}],
     }
@@ -111,6 +151,15 @@ def generer(config: dict, participation: dict) -> dict:
             bloc.get("text", "") for bloc in charge.get("content", []) if bloc.get("type") == "text"
         ).strip()
         brut = re.sub(r"^```(?:json)?|```$", "", brut, flags=re.MULTILINE).strip()
+
+        # Une réponse coupée au plafond n'est pas un JSON invalide : c'est un
+        # portrait trop long. Le dire pour ne pas chercher au mauvais endroit.
+        if charge.get("stop_reason") == "max_tokens":
+            derniere_erreur = (
+                "réponse tronquée au plafond de jetons — le modèle a dépassé "
+                "les 150 mots demandés"
+            )
+            continue
 
         try:
             portrait = json.loads(brut)
