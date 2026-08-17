@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block corps %}
+<div class="enveloppe">
+  <p class="surtitre">Banc d'essai</p>
+  <h1>Le Conseil vous attend</h1>
+  <p>Six questions sur vous. Une chronique en retour, dans un monde qui n'est
+     pas tout à fait le vôtre.</p>
+  <p class="discret">Votre nom ne sera jamais écrit dans le texte. Il servira
+     seulement aux mariés, plus tard, pour vous reconnaître.</p>
+
+  <form method="post" action="/questionnaire">
+    <h2>Qui êtes-vous ?</h2>
+    <p><input type="text" name="prenom" placeholder="Prénom" maxlength="40" required
+              autocomplete="given-name"></p>
+    <p><input type="text" name="nom" placeholder="Nom" maxlength="40" required
+              autocomplete="family-name"></p>
+    <button class="action" type="submit">Commencer</button>
+  </form>
+</div>
+{% endblock %}

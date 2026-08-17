@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block titre %}{{ titre }}{% endblock %}
+{% block corps %}
+<div class="progression"><span id="jauge"></span></div>
+
+<form method="post" action="{{ action }}" id="formulaire">
+  <input type="hidden" name="prenom" value="{{ prenom }}">
+  <input type="hidden" name="nom" value="{{ nom }}">
+
+  <div class="enveloppe">
+  {% for q in questions %}
+    <section class="ecran{% if loop.first %} actif{% endif %}" data-index="{{ loop.index0 }}">
+      <p class="compteur-question">{{ loop.index }} / {{ questions|length }}</p>
+      <p class="question">{{ q.question }}</p>
+      {% if q.exemple %}<p class="exemple">{{ q.exemple }}</p>{% endif %}
+
+      <input type="hidden" name="{{ q.cle }}" id="champ-{{ q.cle }}">
+
+      {% if q.type == "boutons" %}
+        {% for option in q.options %}
+          <button type="button" class="choix" data-cle="{{ q.cle }}"
+                  data-valeur="{{ option }}">{{ option }}</button>
+        {% endfor %}
+      {% elif q.type == "texte_long" %}
+        <textarea id="saisie-{{ q.cle }}" data-cle="{{ q.cle }}"
+                  maxlength="{{ q.limite }}"></textarea>
+        <p class="reste"><span id="reste-{{ q.cle }}">{{ q.limite }}</span> caractères</p>
+        <button type="button" class="action suivant" disabled>Suivant</button>
+      {% else %}
+        <input type="text" id="saisie-{{ q.cle }}" data-cle="{{ q.cle }}"
+               maxlength="{{ q.limite }}" autocomplete="off">
+        <button type="button" class="action suivant" disabled>Suivant</button>
+      {% endif %}
+
+      {% if not loop.first %}
+        <button type="button" class="retour">← Revenir</button>
+      {% endif %}
+    </section>
+  {% endfor %}
+
+    <section class="ecran" data-index="{{ questions|length }}">
+      <p class="compteur-question">C'est tout</p>
+      <p class="question">Le Conseil peut délibérer.</p>
+      <p class="exemple">Comptez une dizaine de secondes pour la réponse.</p>
+      <button type="submit" class="action" id="envoyer">Envoyer mes réponses</button>
+      <button type="button" class="retour">← Revenir</button>
+    </section>
+  </div>
+</form>
+
+<script>
+(function () {
+  var ecrans = Array.prototype.slice.call(document.querySelectorAll(".ecran"));
+  var jauge = document.getElementById("jauge");
+  var courant = 0;
+
+  function afficher(index) {
+    ecrans[courant].classList.remove("actif");
+    courant = index;
+    ecrans[courant].classList.add("actif");
+    jauge.style.width = (courant / (ecrans.length - 1) * 100) + "%";
+    window.scrollTo(0, 0);
+    var saisie = ecrans[courant].querySelector("input[type=text], textarea");
+    if (saisie) { saisie.focus(); }
+  }
+
+  function avancer() {
+    if (courant < ecrans.length - 1) { afficher(courant + 1); }
+  }
+
+  // Boutons de choix : on retient, on enchaîne. Un geste, pas deux.
+  document.querySelectorAll(".choix").forEach(function (bouton) {
+    bouton.addEventListener("click", function () {
+      var section = bouton.closest(".ecran");
+      section.querySelectorAll(".choix").forEach(function (b) {
+        b.classList.remove("retenu");
+      });
+      bouton.classList.add("retenu");
+      document.getElementById("champ-" + bouton.dataset.cle).value = bouton.dataset.valeur;
+      setTimeout(avancer, 220);
+    });
+  });
+
+  // Saisies libres : le bouton reste inerte tant que le champ est vide.
+  document.querySelectorAll("[data-cle][id^=saisie-]").forEach(function (champ) {
+    var section = champ.closest(".ecran");
+    var suivant = section.querySelector(".suivant");
+    var reste = document.getElementById("reste-" + champ.dataset.cle);
+    champ.addEventListener("input", function () {
+      var valeur = champ.value.trim();
+      document.getElementById("champ-" + champ.dataset.cle).value = valeur;
+      suivant.disabled = valeur.length === 0;
+      if (reste) { reste.textContent = champ.maxLength - champ.value.length; }
+    });
+    champ.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && champ.tagName === "INPUT" && !suivant.disabled) {
+        e.preventDefault();
+        avancer();
+      }
+    });
+    suivant.addEventListener("click", avancer);
+  });
+
+  document.querySelectorAll(".retour").forEach(function (bouton) {
+    bouton.addEventListener("click", function () { afficher(courant - 1); });
+  });
+
+  // Un seul envoi possible : sur 4G, un double clic produirait deux portraits.
+  document.getElementById("formulaire").addEventListener("submit", function () {
+    var envoyer = document.getElementById("envoyer");
+    envoyer.disabled = true;
+    envoyer.textContent = "Le Conseil délibère…";
+  });
+
+  afficher(0);
+})();
+</script>
+{% endblock %}

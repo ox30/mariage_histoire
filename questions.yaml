@@ -1,0 +1,189 @@
+# ---------------------------------------------------------------------------
+# Banc d'essai « Terre du Milieu » — configuration
+#
+# Tout ce qui se corrige sans redéployer de code vit ici.
+# Modifier ce fichier puis redémarrer le service suffit.
+# ---------------------------------------------------------------------------
+
+lieux:
+  - La Comté
+  - Fondcombe
+  - Les Mines de la Moria
+  - La Lothlórien
+  - Isengard
+  - Edoras
+  - Minas Tirith
+  - La Forêt Noire
+  - Les Havres Gris
+  - Cirith Ungol
+
+peuples:
+  - hobbit
+  - homme
+  - elfe
+  - nain
+  - dunedain
+
+# --- Premier étage : six questions obligatoires -----------------------------
+# type: boutons | texte_court | texte_long
+# role: sert uniquement à la lecture humaine du fichier
+
+obligatoires:
+  - cle: metier
+    role: ancre forte
+    type: texte_court
+    question: Quel est ton métier, ou ce qui t'occupe tes journées ?
+    exemple: opérateur du trafic, infirmière, retraité jardinier…
+    limite: 60
+
+  - cle: attachement
+    role: signal caché du peuple
+    type: boutons
+    question: À quoi ne renoncerais-tu jamais ?
+    options:
+      - Une bonne table entre amis
+      - La musique et les belles choses
+      - Un travail fait proprement
+      - Ma famille
+      - La route et le grand air
+
+  - cle: defaut
+    role: ancre devinable
+    type: boutons
+    question: Ton défaut, celui que tu avoues volontiers ?
+    options:
+      - Toujours en retard
+      - Je parle trop
+      - Je ne sais pas dire non
+      - Têtu comme une mule
+      - Je veux tout contrôler
+      - Je remets tout à demain
+
+  - cle: objet
+    role: ancre forte (artefact)
+    type: texte_court
+    question: Un objet dont tu ne te sépares jamais ?
+    exemple: mon carnet, ma montre de grand-père, mon sécateur…
+    limite: 60
+
+  - cle: allegeance
+    role: ton du portrait
+    type: boutons
+    question: Ce soir, tu sers la Lumière ou l'Ombre ?
+    options:
+      - La Lumière
+      - L'Ombre
+
+  - cle: souvenir
+    role: ancre la plus forte + message aux mariés
+    type: texte_long
+    question: Un souvenir avec les mariés, une image qui te revient ?
+    exemple: ce qui te vient, même court. C'est ce qu'ils liront.
+    limite: 200
+
+# --- Second étage : six questions bonus ------------------------------------
+
+bonus:
+  - cle: lien
+    role: premier palier d'indice
+    type: boutons
+    question: Comment connais-tu les mariés ?
+    options:
+      - Famille de la mariée
+      - Famille du marié
+      - Ami d'enfance
+      - Collègue
+      - Voisinage
+      - Autrement
+
+  - cle: role_groupe
+    role: fonction dans le chapitre
+    type: boutons
+    question: Dans un groupe, tu es plutôt celui ou celle qui…
+    options:
+      - Organise tout
+      - Fait rire
+      - Réconforte
+      - Calme le jeu
+      - Observe en silence
+
+  - cle: colere
+    role: conflit du chapitre
+    type: boutons
+    question: Qu'est-ce qui te met vraiment en colère ?
+    options:
+      - L'injustice
+      - Le travail bâclé
+      - Le mensonge
+      - Qu'on me presse
+      - Le bruit et la foule
+      - Qu'on touche à mes proches
+
+  - cle: talent
+    role: ancre forte
+    type: texte_court
+    question: Un talent que personne ne soupçonne chez toi ?
+    exemple: je siffle faux mais fort, je répare n'importe quoi…
+    limite: 80
+
+  - cle: phrase
+    role: ancre très forte + voix du personnage
+    type: texte_court
+    question: Une phrase que tu répètes tout le temps ?
+    exemple: celle dont tes proches se moquent
+    limite: 80
+
+  - cle: souhait
+    role: matière de l'épilogue
+    type: texte_long
+    question: Que souhaites-tu aux mariés ?
+    exemple: une phrase suffit
+    limite: 200
+
+# --- Contrat de style transmis au modèle ------------------------------------
+
+contrat: |
+  Tu écris un portrait de personnage situé en Terre du Milieu, pour un jeu de
+  devinettes offert à un couple de mariés. Les invités ont répondu à un
+  questionnaire sur eux-mêmes. Ta tâche est de transposer chaque personne en
+  personnage, sans la rendre méconnaissable.
+
+  RÈGLES ABSOLUES
+  1. Transposer le décor, conserver le détail concret. Un opérateur du trafic
+     devient celui qui règle le passage des convois sur les routes du royaume,
+     pas « un noble voyageur ». Le métier, l'objet et le souvenir doivent
+     rester reconnaissables sous le costume.
+  2. Le portrait contient au moins TROIS ancres identifiables, dont au moins
+     une forte (le métier ou l'objet).
+  3. N'écris JAMAIS un nom propre réel. Aucun prénom, aucun nom de famille,
+     aucun nom de commune du monde réel. Le personnage n'a que son nom fictif.
+  4. Aucun trait physique : ni taille, ni poids, ni cheveux, ni âge.
+  5. Si l'allégeance est l'Ombre, le personnage est grandiose, inquiétant,
+     parfois comique — jamais méchant, jamais humiliant. C'est un cadeau de
+     mariage, pas une pique.
+  6. Le souvenir avec les mariés doit être transposé, pas recopié : il devient
+     une scène vécue en Terre du Milieu.
+  7. Français, 150 mots maximum, à la troisième personne, ton de chronique.
+
+  LE PEUPLE
+  Tu le déduis de l'ensemble des réponses, sans jamais le dire à la première
+  personne. La réponse à « à quoi ne renoncerais-tu jamais » est l'indication
+  la plus forte, à pondérer par le reste :
+    une bonne table entre amis  → hobbit
+    la musique et les belles choses → elfe
+    un travail fait proprement  → nain
+    ma famille                  → homme
+    la route et le grand air    → dunedain
+
+  LE NOM FICTIF
+  Inventé, prononçable à voix haute, cohérent avec le peuple, et qui ne
+  ressemble pas au nom réel de la personne. Deux mots maximum.
+
+  L'INDICE
+  Une seule phrase, destinée aux mariés s'ils sont bloqués. Elle oriente sans
+  livrer la réponse : elle désigne le domaine de la vie de la personne, jamais
+  son identité.
+
+  SORTIE
+  Uniquement un objet JSON, sans texte autour, sans balises de code :
+  {"nom_fictif": "...", "peuple": "...", "portrait": "...", "indice": "..."}
