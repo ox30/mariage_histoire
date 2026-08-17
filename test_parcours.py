@@ -10,7 +10,7 @@ ctx = TestClient(main.app); ctx.__enter__(); c = ctx
 assert c.get("/").status_code == 200, "accueil"
 r = c.post("/questionnaire", data={"prenom": "Florian", "nom": "Test"})
 assert r.status_code == 200 and "Quel est ton métier" in r.text, "questionnaire"
-assert r.text.count('class="ecran') == 7, r.text.count('class="ecran')
+assert r.text.count('class="ecran') == 9, "6 questions + 2 conditionnelles + récapitulatif"
 
 reponses = {
     "prenom": "Florian", "nom": "Test",
@@ -192,10 +192,54 @@ assert "souhaites-tu" not in msg, "ni la question du vœu"
 assert "5 complémentaires" in msg, msg[-400:]
 
 contrat = main.CONFIG["contrat"]
-for regle in ("peut être nommée", "elle ne se pose jamais à plat",
+for regle in ("PEUT être nommée", "elle ne se pose jamais à plat",
               "a sa place dans le portrait, mais transposé",
               "Ne commence ni ne termine jamais", "cette limite est ferme"):
     assert regle in contrat, regle
 assert "n'ouvre pas le portrait sur cette" in msg, "consigne d'ouverture transmise"
 assert "décor du portrait, pas son sujet" in msg
 print("TOUT PASSE (5)")
+
+# --- Ombre : questions conditionnelles, peuples, cloisonnement --------------
+r = c2.post("/questionnaire", data={"prenom": "Fay", "nom": "Test"})
+assert 'data-condition-cle="allegeance"' in r.text
+assert r.text.count('data-condition-valeur="L&#39;Ombre"') == 2, "deux écrans conditionnels"
+assert "Un monstre, et j'assume" in r.text.replace("&#39;", "'")
+assert "périr dans d'atroces souffrances" in r.text.replace("&#39;", "'")
+assert "La nature" in r.text, "sixième réponse d'attachement"
+
+peuples = main.CONFIG["peuples"]
+for p in ("hobbit", "elfe", "nain", "homme", "dunedain", "ent",
+          "Dunlending", "Numenoreen noir", "Corsaire d'Umbar", "Oriental",
+          "Haradrim", "Variag de Khand",
+          "troll", "spectre", "Uruk-hai", "gobelin", "cavalier de warg", "orque"):
+    assert p in peuples, p
+assert len(peuples) == 18, "six peuples par registre"
+
+# le destin ne quitte jamais la base
+sombre = dict(donnees)
+sombre.update({"prenom": "Fay", "nom": "Test", "allegeance": "L'Ombre",
+               "attachement": "La nature",
+               "monstre": "Un monstre, et j'assume",
+               "destin": "Oui, et que ce soit spectaculaire", "suite": "maintenant"})
+uid6 = c2.post("/valider", data=sombre, follow_redirects=False).headers["location"].split("/")[-1]
+stocke = bd.lire(uid6)["reponses_json"]
+assert "spectaculaire" in stocke and "j'assume" in stocke, "les deux réponses sont stockées"
+
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": "Isengard", "reponses": _json.loads(stocke),
+    "noms_interdits": [], "couple": main.COUPLE})
+assert "j'assume" in msg, "le consentement guide le peuple, il est transmis"
+assert "spectaculaire" not in msg, "le destin n'atteint jamais le modèle"
+assert "périr" not in msg
+
+contrat = main.CONFIG["contrat"]
+# les trois registres couvrent les six mêmes réponses, sans trou
+for cle in ("une bonne table entre amis", "la musique et les belles choses",
+            "un travail fait proprement", "ma famille",
+            "la route et le grand air", "la nature"):
+    assert contrat.count(cle) == 3, (cle, contrat.count(cle))
+for peuple in ("ent", "orque", "Variag de Khand", "troll", "Corsaire d'Umbar"):
+    assert "→ " + peuple in contrat, peuple
+assert "jamais humiliant" in contrat
+print("TOUT PASSE (6)")

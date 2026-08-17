@@ -3,6 +3,14 @@
 #
 # Tout ce qui se corrige sans redéployer de code vit ici.
 # Modifier ce fichier puis redémarrer le service suffit.
+#
+# Champs reconnus par le code :
+#   type       boutons | texte_court | texte_long
+#   role       lecture humaine seulement
+#   usage      portrait (défaut) | indice | revelation | chapitre
+#              revelation et chapitre ne sont JAMAIS transmis au modèle
+#   condition  question posée seulement si {cle} vaut {valeur}
+#   prealable  sélecteur affiché au-dessus d'une zone de texte
 # ---------------------------------------------------------------------------
 
 lieux:
@@ -17,16 +25,30 @@ lieux:
   - Les Havres Gris
   - Cirith Ungol
 
+# Six peuples de la Lumière, quatre peuples humains de l'Ombre, six créatures.
+# Le peuple est toujours déduit, jamais choisi. Les créatures ne s'ouvrent que
+# sur consentement explicite de l'invité (question `monstre`).
 peuples:
   - hobbit
-  - homme
   - elfe
   - nain
+  - homme
   - dunedain
+  - ent
+  - Dunlending
+  - Numenoreen noir
+  - Corsaire d'Umbar
+  - Oriental
+  - Haradrim
+  - Variag de Khand
+  - troll
+  - spectre
+  - Uruk-hai
+  - gobelin
+  - cavalier de warg
+  - orque
 
-# --- Premier étage : six questions obligatoires -----------------------------
-# type: boutons | texte_court | texte_long
-# role: sert uniquement à la lecture humaine du fichier
+# --- Premier étage : six questions, plus deux si l'Ombre est choisie --------
 
 obligatoires:
   - cle: metier
@@ -46,6 +68,7 @@ obligatoires:
       - Un travail fait proprement
       - Ma famille
       - La route et le grand air
+      - La nature
 
   - cle: defaut
     role: ancre devinable
@@ -67,12 +90,37 @@ obligatoires:
     limite: 60
 
   - cle: allegeance
-    role: ton du portrait
+    role: registre du portrait
     type: boutons
     question: Ce soir, tu sers la Lumière ou l'Ombre ?
     options:
       - La Lumière
       - L'Ombre
+
+  - cle: monstre
+    role: consentement explicite au registre monstrueux
+    type: boutons
+    condition:
+      cle: allegeance
+      valeur: L'Ombre
+    question: Jusqu'où ?
+    exemple: un seigneur reste un seigneur. Un monstre est un monstre.
+    options:
+      - Un seigneur redouté, mais un seigneur
+      - Un monstre, et j'assume
+
+  - cle: destin
+    role: drapeau pour l'écriture des chapitres, jamais transmis au modèle
+    usage: chapitre
+    type: boutons
+    condition:
+      cle: allegeance
+      valeur: L'Ombre
+    question: Acceptes-tu de périr dans d'atroces souffrances ?
+    exemple: pas ce soir. Plus tard, dans le récit que recevront les mariés.
+    options:
+      - Oui, et que ce soit spectaculaire
+      - Non, je compte bien survivre
 
   - cle: souvenir
     role: ancre la plus forte + message aux mariés
@@ -88,7 +136,7 @@ obligatoires:
     exemple: ce qui te vient, même court. C'est ce qu'ils liront.
     limite: 300
 
-# --- Second étage : six questions bonus ------------------------------------
+# --- Second étage : six questions complémentaires ---------------------------
 
 bonus:
   - cle: lien
@@ -146,7 +194,7 @@ bonus:
     type: texte_long
     question: Que souhaites-tu à {mariee} et {marie} ?
     exemple: une phrase suffit
-    limite: 200
+    limite: 300
 
 # --- Contrat de style transmis au modèle ------------------------------------
 
@@ -169,57 +217,74 @@ contrat: |
      comprendre les réponses, jamais pour être écrits. Dans le texte, les
      mariés sont « les deux fiancés », « celle qu'on célèbre », « le futur
      époux » — jamais nommés.
-  4. Aucun trait physique : ni taille, ni poids, ni cheveux, ni âge.
-  5. Si l'allégeance est l'Ombre, le personnage est grandiose, inquiétant,
-     parfois comique — jamais méchant, jamais humiliant. C'est un cadeau de
-     mariage, pas une pique.
-     L'allégeance **peut être nommée**, et elle mérite de l'être quand elle
+  4. Aucun trait physique du monde réel : ni taille, ni poids, ni cheveux, ni
+     âge. Les attributs du peuple, en revanche, t'appartiennent.
+  5. L'allégeance PEUT être nommée, et elle mérite de l'être quand elle
      détonne : un homme du Rohan au service de l'Ombre, une contradiction
      pareille est un ressort, pas une gêne — exploite-la.
-     En revanche, **elle ne se pose jamais à plat**, et surtout pas en fin de
+     En revanche elle ne se pose jamais à plat, et surtout pas en fin de
      portrait. Sont interdites les chutes du type « ce soir, il sert la
      Lumière » ou « il sert l'Ombre, avec la rigueur d'un forgeron » : une
      étiquette collée après coup n'apprend rien. Fais-la vivre dans l'action —
      ce qu'il fréquente, ce qu'il tait, à qui il rend des comptes.
   6. Le souvenir avec les mariés doit être transposé, pas recopié : il devient
      une scène vécue en Terre du Milieu.
-  7. **Le lien avec les mariés a sa place dans le portrait, mais transposé.**
+  7. Le lien avec les mariés a sa place dans le portrait, mais transposé.
      N'emploie aucun terme du monde réel — ni beau-frère, ni belle-sœur, ni
      cousin, ni collègue, ni voisin : ces mots-là appartiennent à l'indice.
      Dis la même chose avec les mots de la Terre du Milieu : « celle qui devint
      sœur de son épouse », « ceux de sa parenté », « ceux avec qui il partage
-     l'établi ». Le lien doit se comprendre sans qu'un mot du monde réel soit
-     prononcé.
-  8. **Utilise toutes les réponses données, mais jamais dans le même ordre.**
+     l'établi ».
+  8. Utilise toutes les réponses données, mais jamais dans le même ordre.
      Chaque réponse est une prise pour deviner : en écarter une, c'est retirer
-     une chance aux mariés. En revanche, ne déroule pas le questionnaire de
-     haut en bas — les portraits se liront à la suite et le gabarit sauterait
-     aux yeux. Change de point d'entrée à chaque fois : une scène en cours, un
-     objet posé là, une réputation qui court, une phrase entendue au détour
-     d'un couloir. Une réponse peut être portée par une image plutôt que par
-     une phrase qui la décrit.
-     **Ne commence ni ne termine jamais deux portraits de la même façon.**
-     N'ouvre pas sur la convocation ni sur le nom du lieu — « Convoqué à… »
-     est l'ouverture la plus attendue, donc la plus lassante à la dixième
-     lecture. Entre par le personnage : un geste en cours, une habitude, une
-     réputation qui court, une chose qu'on lui reproche. Le nom du personnage
-     n'a pas à figurer dans la première phrase.
-     Ne finis pas non plus sur une formule de vœux.
+     une chance aux mariés.
+     Ne commence ni ne termine jamais deux portraits de la même façon. N'ouvre
+     pas sur la convocation ni sur le nom du lieu — « Convoqué à… » est
+     l'ouverture la plus attendue, donc la plus lassante à la dixième lecture.
+     Entre par le personnage : un geste en cours, une habitude, une réputation
+     qui court, une chose qu'on lui reproche. Le nom du personnage n'a pas à
+     figurer dans la première phrase. Ne finis pas sur une formule de vœux.
   9. Français, à la troisième personne, ton de chronique.
-     **150 mots maximum, et cette limite est ferme.** Un portrait de 200 mots
-     n'est pas plus riche, il est plus long : à la dixième lecture d'affilée,
-     c'est la concision qui tient. Coupe les adjectifs avant de couper les
-     ancres.
+     150 mots maximum, et cette limite est ferme. Un portrait de 200 mots n'est
+     pas plus riche, il est plus long : à la dixième lecture d'affilée, c'est
+     la concision qui tient. Coupe les adjectifs avant de couper les ancres.
 
   LE PEUPLE
-  Tu le déduis de l'ensemble des réponses, sans jamais le dire à la première
-  personne. La réponse à « à quoi ne renoncerais-tu jamais » est l'indication
-  la plus forte, à pondérer par le reste :
-    une bonne table entre amis  → hobbit
+  Il se déduit de « à quoi ne renoncerais-tu jamais », croisée avec
+  l'allégeance. Le champ « peuple » reprend exactement l'un des noms ci-dessous.
+
+  ALLÉGEANCE À LA LUMIÈRE — correspondance stricte :
+    une bonne table entre amis      → hobbit
     la musique et les belles choses → elfe
-    un travail fait proprement  → nain
-    ma famille                  → homme
-    la route et le grand air    → dunedain
+    un travail fait proprement      → nain
+    ma famille                      → homme
+    la route et le grand air        → dunedain
+    la nature                       → ent
+
+  ALLÉGEANCE À L'OMBRE, « un seigneur redouté » — correspondance stricte, parmi
+  les peuples humains qui servent l'Ombre. Ce sont des hommes, pas des
+  créatures : dignes, cultivés, redoutables. Le métier, l'objet et le souvenir
+  survivent intacts.
+    une bonne table entre amis      → Dunlending
+    la musique et les belles choses → Numenoreen noir
+    un travail fait proprement      → Corsaire d'Umbar
+    ma famille                      → Oriental
+    la route et le grand air        → Haradrim
+    la nature                       → Variag de Khand
+
+  ALLÉGEANCE À L'OMBRE, « un monstre, et j'assume » — la personne l'a
+  explicitement demandé, ne te retiens pas :
+    une bonne table entre amis      → troll
+    la musique et les belles choses → spectre
+    un travail fait proprement      → Uruk-hai
+    ma famille                      → gobelin
+    la route et le grand air        → cavalier de warg
+    la nature                       → orque
+
+  Le monstre reste grandiose ou comique, jamais humiliant : c'est un cadeau de
+  mariage, et la personne a choisi son camp en connaissance de cause. Ses
+  ancres restent reconnaissables sous la peau verte — un troll tient l'auberge,
+  un Uruk-hai forge, un orque abat les arbres que d'autres plantent.
 
   LE NOM FICTIF
   Inventé, prononçable à voix haute, cohérent avec le peuple, et qui ne

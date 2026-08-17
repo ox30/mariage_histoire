@@ -74,18 +74,22 @@ def _construire_message(config: dict, participation: dict) -> str:
     for bloc in ("obligatoires", "bonus"):
         for q in config[bloc]:
             usage = q.get("usage", "portrait")
-            # `revelation` : la réponse n'atteint jamais le modèle. Elle est
-            # montrée telle quelle aux mariés, dans la voix de la personne.
+            # `revelation` : montré tel quel aux mariés, jamais au modèle.
+            # `chapitre`  : dort en base jusqu'à l'écriture des chapitres.
             # Une donnée absente ne peut pas être mal employée ; une consigne,
             # si. Elle peut d'ailleurs contenir des prénoms réels.
-            if usage == "revelation":
-                continue
+            ignoree = usage in ("revelation", "chapitre")
             cible = pour_indice if usage == "indice" else pour_portrait
             prealable = q.get("prealable")
             if prealable and reponses.get(prealable["cle"]):
-                cible.append(f"- {prealable['question']} → {reponses[prealable['cle']]}")
+                usage_p = prealable.get("usage", usage)
+                if usage_p != "chapitre" and usage_p != "revelation":
+                    cible_p = pour_indice if usage_p == "indice" else pour_portrait
+                    cible_p.append(
+                        f"- {prealable['question']} → {reponses[prealable['cle']]}"
+                    )
             valeur = reponses.get(q["cle"])
-            if valeur:
+            if valeur and not ignoree:
                 cible.append(f"- {q['question']} → {valeur}")
                 if bloc == "obligatoires" and usage == "portrait":
                     obligatoires_donnees += 1
