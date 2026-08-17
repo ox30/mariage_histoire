@@ -27,12 +27,20 @@ persistée, SQLAlchemy, sauvegardes, phases de soirée. Inutile pour le test.
    | `ANTHROPIC_API_KEY` | la clé de la console Anthropic |
    | `MOT_DE_PASSE_ADMIN` | un mot de passe long |
    | `MODELE_IA` | `claude-sonnet-5` |
+   | `PRENOM_MARIEE` | `Delphine` |
+   | `PRENOM_MARIE` | `Jérémy` |
+   | `EXIGER_VOLUME` | `1` |
+
+   Les prénoms des mariés apparaissent dans les libellés du questionnaire et
+   sont transmis au modèle **pour comprendre les réponses**, jamais pour être
+   écrits : ils figurent aussi dans la liste des noms interdits en sortie.
 
 4. Onglet **Settings** → *Generate Domain*.
-5. Volume persistant : **facultatif ici**. S'il est monté sur `/data`, la base
-   y est écrite ; sinon elle vit dans le conteneur et disparaît au
-   redéploiement. Pour un test d'une soirée, monte-le quand même : perdre huit
-   participations parce qu'on a poussé un commit serait rageant.
+5. **Volume persistant : indispensable.** Onglet *Volumes* → *New Volume*,
+   point de montage `/data`. Sans lui, la base vit dans le conteneur et
+   **chaque redéploiement efface tout** — y compris un simple ajout de
+   variable. Pose `EXIGER_VOLUME=1` : le service refusera alors de démarrer
+   sans volume, au lieu de perdre les données en silence.
 
 Réplique unique, comme l'application réelle : SQLite n'accepte pas deux
 conteneurs sur le même fichier.
@@ -59,14 +67,22 @@ banc d'essai.
 
 ## Protocole de test
 
+0. **Le parcours** : six questions, puis un choix — *Créer mon personnage* ou
+   *Six questions de plus*. Ceux qui créent tout de suite se voient reproposer
+   les six autres après lecture du portrait ; ceux qui les ont déjà données ne
+   les revoient pas. Les questions complémentaires sont facultatives une par
+   une : on peut en sauter.
+
 1. **Ne montre l'écran à personne avant.** Envoie le lien à huit personnes que
    tu connais bien, sans explication, chacune sur son propre téléphone. C'est
    ton `EX-PLA-01` appliqué trois semaines en avance.
 2. **Regarde par-dessus l'épaule d'au moins deux d'entre elles.** Où hésitent-
    elles ? Quelle question fait ressortir un « je réponds quoi, là ? » Ce
    moment vaut plus que tout ce que le tableau de bord affiche.
-3. **Note qui prend les six questions bonus.** Si personne ne les prend, le
-   second étage ne sert à rien et le roman s'écrira sur six réponses.
+3. **Note qui prend les six questions complémentaires, et à quel moment** —
+   avant la création du personnage, ou après l'avoir lu. Si personne ne les
+   prend, le second étage ne sert à rien et le roman s'écrira sur six réponses.
+   Si tous les preneurs le font *avant*, la seconde proposition peut disparaître.
 4. **Ouvre `/deviner` avec quelqu'un qui connaît les huit.** Les boutons
    *Deviné* / *Raté* comptent pour toi.
 5. **Lis le tableau** : attente maximale, échecs, fuites de noms.

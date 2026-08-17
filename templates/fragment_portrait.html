@@ -1,4 +1,11 @@
-{% if p.etat in ("en_attente", "en_cours") %}
+{% if p.etat == "brouillon" %}
+  <p class="surtitre">{{ p.lieu }}</p>
+  <h1>Il reste six questions</h1>
+  <p>Vos six premières réponses sont enregistrées. Votre chronique s'écrira dès
+     que vous aurez terminé — ou tout de suite, si vous préférez.</p>
+  <a class="action" href="/bonus/{{ p.uuid }}/questions">Continuer</a>
+
+{% elif p.etat in ("en_attente", "en_cours") %}
   <div hx-get="/portrait/{{ p.uuid }}/etat" hx-trigger="every 2s" hx-target="#zone-portrait">
     <p class="surtitre">{{ p.lieu }}</p>
     <h1>On vous attendait ici</h1>

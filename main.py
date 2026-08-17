@@ -26,8 +26,36 @@ import base_donnees as bd
 import ia
 
 RACINE = os.path.dirname(os.path.abspath(__file__))
-CONFIG = yaml.safe_load(open(os.path.join(RACINE, "questions.yaml"), encoding="utf-8"))
 MAX_GENERATIONS = 3
+
+# Prénoms des mariés : en variables d'environnement, jamais dans le dépôt, pour
+# que l'outil serve à un autre mariage sans toucher au code ni à la config.
+COUPLE = {
+    "mariee": os.environ.get("PRENOM_MARIEE", "la mariée"),
+    "marie": os.environ.get("PRENOM_MARIE", "le marié"),
+}
+
+
+def _substituer(valeur):
+    """Remplace {mariee} et {marie} partout dans la configuration chargée.
+
+    Remplacement explicite et non `str.format` : le contrat de style contient
+    des accolades JSON que format interpréterait comme des champs.
+    """
+    if isinstance(valeur, str):
+        for cle, prenom in COUPLE.items():
+            valeur = valeur.replace("{" + cle + "}", prenom)
+        return valeur
+    if isinstance(valeur, list):
+        return [_substituer(v) for v in valeur]
+    if isinstance(valeur, dict):
+        return {c: _substituer(v) for c, v in valeur.items()}
+    return valeur
+
+
+CONFIG = _substituer(
+    yaml.safe_load(open(os.path.join(RACINE, "questions.yaml"), encoding="utf-8"))
+)
 
 @asynccontextmanager
 async def cycle_de_vie(_: FastAPI):
@@ -62,6 +90,9 @@ def _lancer_generation(identifiant: str) -> None:
             return
         bd.marquer_en_cours(identifiant)
         interdits = [m for m in bd.tous_les_prenoms() if len(m) >= 3]
+        # Les prénoms des mariés servent à comprendre les réponses, jamais à
+        # être écrits : ils sont donc aussi interdits en sortie.
+        interdits += [v for v in COUPLE.values() if len(v) >= 3]
         try:
             portrait = ia.generer(
                 CONFIG,
@@ -69,6 +100,7 @@ def _lancer_generation(identifiant: str) -> None:
                     "lieu": ligne["lieu"],
                     "reponses": json.loads(ligne["reponses_json"]),
                     "noms_interdits": interdits,
+                    "couple": COUPLE,
                 },
             )
             bd.enregistrer_portrait(identifiant, portrait)
@@ -81,6 +113,11 @@ def _lancer_generation(identifiant: str) -> None:
 def _reponses_du_formulaire(donnees: dict, bloc: str) -> dict:
     reponses = {}
     for question in CONFIG[bloc]:
+        prealable = question.get("prealable")
+        if prealable:
+            valeur = (donnees.get(prealable["cle"]) or "").strip()
+            if valeur:
+                reponses[prealable["cle"]] = valeur[:60]
         valeur = (donnees.get(question["cle"]) or "").strip()
         if valeur:
             limite = question.get("limite", 200)
@@ -108,6 +145,8 @@ def questionnaire(request: Request, prenom: str = Form(...), nom: str = Form(...
             "questions": CONFIG["obligatoires"],
             "action": "/valider",
             "titre": "Six questions",
+            "bifurcation": True,
+            "facultatif": False,
         },
     )
 
@@ -120,6 +159,13 @@ async def valider(request: Request):
     if not prenom or not nom:
         return RedirectResponse("/", status_code=303)
     reponses = _reponses_du_formulaire(donnees, "obligatoires")
+
+    # Le choix se fait avant la génération : celui qui veut en dire plus n'attend
+    # pas deux fois, et on ne lui demande pas de rouvrir un cadeau déjà ouvert.
+    if donnees.get("suite") == "bonus":
+        identifiant = bd.creer(prenom, nom, reponses, CONFIG["lieux"], etat="brouillon")
+        return RedirectResponse(f"/bonus/{identifiant}/questions", status_code=303)
+
     identifiant = bd.creer(prenom, nom, reponses, CONFIG["lieux"])
     _lancer_generation(identifiant)
     return RedirectResponse(f"/portrait/{identifiant}", status_code=303)
@@ -169,6 +215,8 @@ def proposer_bonus(request: Request, identifiant: str):
     ligne = bd.lire(identifiant)
     if ligne is None:
         raise HTTPException(status_code=404, detail="Introuvable")
+    if ligne["etage"] == 2:
+        return RedirectResponse("/fin", status_code=303)
     return gabarits.TemplateResponse(
         "bonus_intro.html", {"request": request, "p": ligne}
     )
@@ -188,6 +236,8 @@ def questions_bonus(request: Request, identifiant: str):
             "questions": CONFIG["bonus"],
             "action": f"/bonus/{identifiant}",
             "titre": "Six de plus",
+            "bifurcation": False,
+            "facultatif": True,
         },
     )
 
@@ -195,7 +245,8 @@ def questions_bonus(request: Request, identifiant: str):
 @app.post("/bonus/{identifiant}")
 async def enregistrer_bonus(request: Request, identifiant: str):
     donnees = dict(await request.form())
-    bd.ajouter_bonus(identifiant, _reponses_du_formulaire(donnees, "bonus"))
+    reponses = {} if donnees.get("sortie") else _reponses_du_formulaire(donnees, "bonus")
+    bd.ajouter_bonus(identifiant, reponses)
     _lancer_generation(identifiant)
     return RedirectResponse(f"/portrait/{identifiant}", status_code=303)
 

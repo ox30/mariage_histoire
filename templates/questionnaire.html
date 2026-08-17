@@ -44,15 +44,32 @@
 
       {% if not loop.first %}
         <button type="button" class="retour">← Revenir</button>
+      {% elif facultatif %}
+        <button type="submit" class="retour" name="sortie" value="1">
+          Créer mon personnage sans ces questions
+        </button>
       {% endif %}
     </section>
   {% endfor %}
 
     <section class="ecran" data-index="{{ questions|length }}">
       <p class="compteur-question">C'est tout</p>
-      <p class="question">Le Conseil peut délibérer.</p>
-      <p class="exemple">Comptez une dizaine de secondes pour la réponse.</p>
-      <button type="submit" class="action" id="envoyer">Envoyer mes réponses</button>
+      {% if bifurcation %}
+        <p class="question">Le Conseil peut délibérer.</p>
+        <p class="exemple">Ou vous pouvez en dire plus : six questions de plus,
+           et votre chronique sera plus riche — les mariés auront davantage à
+           deviner.</p>
+        <button type="submit" class="action" id="envoyer" name="suite" value="maintenant">
+          Créer mon personnage
+        </button>
+        <button type="submit" class="action sobre" name="suite" value="bonus">
+          Six questions de plus
+        </button>
+      {% else %}
+        <p class="question">Le Conseil peut délibérer.</p>
+        <p class="exemple">Comptez une dizaine de secondes pour la réponse.</p>
+        <button type="submit" class="action" id="envoyer">Envoyer mes réponses</button>
+      {% endif %}
       <button type="button" class="retour">← Revenir</button>
     </section>
   </div>
@@ -60,6 +77,7 @@
 
 <script>
 (function () {
+  var facultatif = {{ "true" if facultatif else "false" }};
   var ecrans = Array.prototype.slice.call(document.querySelectorAll(".ecran"));
   var jauge = document.getElementById("jauge");
   var courant = 0;
@@ -117,7 +135,7 @@
       document.getElementById("champ-" + champ.dataset.cle).value = valeur;
       var manquePrealable = prealable
         && !section.querySelector(".prealable.retenu");
-      suivant.disabled = valeur.length === 0 || manquePrealable;
+      suivant.disabled = facultatif ? false : (valeur.length === 0 || manquePrealable);
       if (reste) { reste.textContent = champ.maxLength - champ.value.length; }
     });
     champ.addEventListener("keydown", function (e) {
@@ -133,11 +151,19 @@
     bouton.addEventListener("click", function () { afficher(courant - 1); });
   });
 
+  // Un questionnaire facultatif se traverse sans rien écrire : le bouton est
+  // actif dès l'arrivée sur l'écran.
+  if (facultatif) {
+    document.querySelectorAll(".suivant").forEach(function (b) { b.disabled = false; });
+  }
+
   // Un seul envoi possible : sur 4G, un double clic produirait deux portraits.
   document.getElementById("formulaire").addEventListener("submit", function () {
+    document.querySelectorAll("#formulaire button[type=submit]").forEach(function (b) {
+      b.disabled = true;
+    });
     var envoyer = document.getElementById("envoyer");
-    envoyer.disabled = true;
-    envoyer.textContent = "Le Conseil délibère…";
+    if (envoyer) { envoyer.textContent = "Le Conseil délibère…"; }
   });
 
   afficher(0);

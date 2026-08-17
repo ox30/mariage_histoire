@@ -14,6 +14,16 @@ from datetime import datetime, timezone
 DOSSIER = "/data" if os.path.isdir("/data") else "."
 CHEMIN = os.path.join(DOSSIER, "banc-essai.db")
 
+# Le repli vers le dossier courant est commode en local et dangereux en ligne :
+# la base vit alors dans le conteneur et disparaît au redéploiement. Poser
+# EXIGER_VOLUME=1 dans Railway fait échouer le démarrage plutôt que de perdre
+# les données en silence.
+if os.environ.get("EXIGER_VOLUME") == "1" and DOSSIER != "/data":
+    raise RuntimeError(
+        "EXIGER_VOLUME=1 mais /data est absent : aucun volume persistant n'est "
+        "monté. Railway → service → Volumes → point de montage /data."
+    )
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS participation (
     uuid              TEXT PRIMARY KEY,
@@ -72,17 +82,18 @@ def assigner_lieu(cnx: sqlite3.Connection, lieux: list[str]) -> str:
     return random.choice([lieu for lieu, n in effectifs.items() if n == minimum])
 
 
-def creer(prenom: str, nom: str, reponses: dict, lieux: list[str]) -> str:
+def creer(prenom: str, nom: str, reponses: dict, lieux: list[str],
+          etat: str = "en_attente") -> str:
     identifiant = str(uuid.uuid4())
     horodatage = maintenant()
     with connexion() as cnx:
         lieu = assigner_lieu(cnx, lieux)
         cnx.execute(
             """INSERT INTO participation
-               (uuid, prenom, nom, lieu, reponses_json, creee_le, modifiee_le)
-               VALUES (?,?,?,?,?,?,?)""",
+               (uuid, prenom, nom, lieu, reponses_json, etat, creee_le, modifiee_le)
+               VALUES (?,?,?,?,?,?,?,?)""",
             (identifiant, prenom, nom, lieu, json.dumps(reponses, ensure_ascii=False),
-             horodatage, horodatage),
+             etat, horodatage, horodatage),
         )
     return identifiant
 
@@ -154,15 +165,22 @@ def valider(identifiant: str) -> None:
 
 
 def ajouter_bonus(identifiant: str, reponses_bonus: dict) -> None:
+    """Fusionne les réponses complémentaires et remet l'objet en attente.
+
+    Sans réponse complémentaire — l'invité a choisi de passer — l'étage reste
+    à 1 : le tableau de bord doit dire la vérité sur ce qui a été donné.
+    """
     with connexion() as cnx:
         ligne = cnx.execute(
             "SELECT reponses_json FROM participation WHERE uuid=?", (identifiant,)
         ).fetchone()
         reponses = json.loads(ligne["reponses_json"])
         reponses.update(reponses_bonus)
+        etage = 2 if reponses_bonus else 1
         cnx.execute(
             """UPDATE participation
-               SET reponses_json=?, etage=2, validee=0, modifiee_le=?
+               SET reponses_json=?, etage=?, validee=0, etat='en_attente',
+                   modifiee_le=?
                WHERE uuid=?""",
-            (json.dumps(reponses, ensure_ascii=False), maintenant(), identifiant),
+            (json.dumps(reponses, ensure_ascii=False), etage, maintenant(), identifiant),
         )
