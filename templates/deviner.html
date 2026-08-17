@@ -43,6 +43,15 @@
         </div>
         <div class="revelation" id="nom-{{ p.uuid }}">
           <p class="vrai-nom">{{ p.prenom }} {{ p.nom }}</p>
+          {% set dit = p.reponses %}
+          {% if dit.souvenir %}
+            <p class="discret" style="margin-bottom:0.2rem">Ce dont il ou elle se souvient</p>
+            <p style="font-style:italic">« {{ dit.souvenir }} »</p>
+          {% endif %}
+          {% if dit.souhait %}
+            <p class="discret" style="margin-bottom:0.2rem">Ce qu'il ou elle vous souhaite</p>
+            <p style="font-style:italic">« {{ dit.souhait }} »</p>
+          {% endif %}
           <button type="button" class="retour compter" data-resultat="oui">Deviné</button>
           &nbsp;·&nbsp;
           <button type="button" class="retour compter" data-resultat="non">Raté</button>
