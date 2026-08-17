@@ -16,6 +16,16 @@
 
       <input type="hidden" name="{{ q.cle }}" id="champ-{{ q.cle }}">
 
+      {% if q.prealable %}
+        <input type="hidden" name="{{ q.prealable.cle }}" id="champ-{{ q.prealable.cle }}">
+        <p class="exemple" style="margin-bottom:0.6rem">{{ q.prealable.question }}</p>
+        {% for option in q.prealable.options %}
+          <button type="button" class="choix prealable" data-cle="{{ q.prealable.cle }}"
+                  data-valeur="{{ option }}">{{ option }}</button>
+        {% endfor %}
+        <p style="margin:0 0 1rem"></p>
+      {% endif %}
+
       {% if q.type == "boutons" %}
         {% for option in q.options %}
           <button type="button" class="choix" data-cle="{{ q.cle }}"
@@ -68,11 +78,25 @@
     if (courant < ecrans.length - 1) { afficher(courant + 1); }
   }
 
-  // Boutons de choix : on retient, on enchaîne. Un geste, pas deux.
-  document.querySelectorAll(".choix").forEach(function (bouton) {
+  // Sélecteur préalable : on retient, on n'avance pas — le texte reste à écrire.
+  document.querySelectorAll(".prealable").forEach(function (bouton) {
     bouton.addEventListener("click", function () {
       var section = bouton.closest(".ecran");
-      section.querySelectorAll(".choix").forEach(function (b) {
+      section.querySelectorAll(".prealable").forEach(function (b) {
+        b.classList.remove("retenu");
+      });
+      bouton.classList.add("retenu");
+      document.getElementById("champ-" + bouton.dataset.cle).value = bouton.dataset.valeur;
+      var champ = section.querySelector("[id^=saisie-]");
+      if (champ) { champ.dispatchEvent(new Event("input")); }
+    });
+  });
+
+  // Boutons de choix : on retient, on enchaîne. Un geste, pas deux.
+  document.querySelectorAll(".choix:not(.prealable)").forEach(function (bouton) {
+    bouton.addEventListener("click", function () {
+      var section = bouton.closest(".ecran");
+      section.querySelectorAll(".choix:not(.prealable)").forEach(function (b) {
         b.classList.remove("retenu");
       });
       bouton.classList.add("retenu");
@@ -81,15 +105,19 @@
     });
   });
 
-  // Saisies libres : le bouton reste inerte tant que le champ est vide.
+  // Saisies libres : le bouton reste inerte tant que le champ est vide, et
+  // tant que le sélecteur préalable de l'écran n'est pas renseigné.
   document.querySelectorAll("[data-cle][id^=saisie-]").forEach(function (champ) {
     var section = champ.closest(".ecran");
     var suivant = section.querySelector(".suivant");
     var reste = document.getElementById("reste-" + champ.dataset.cle);
+    var prealable = section.querySelector(".prealable");
     champ.addEventListener("input", function () {
       var valeur = champ.value.trim();
       document.getElementById("champ-" + champ.dataset.cle).value = valeur;
-      suivant.disabled = valeur.length === 0;
+      var manquePrealable = prealable
+        && !section.querySelector(".prealable.retenu");
+      suivant.disabled = valeur.length === 0 || manquePrealable;
       if (reste) { reste.textContent = champ.maxLength - champ.value.length; }
     });
     champ.addEventListener("keydown", function (e) {
