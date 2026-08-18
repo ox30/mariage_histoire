@@ -68,6 +68,10 @@ app.mount("/static", StaticFiles(directory=os.path.join(RACINE, "static")), name
 gabarits = Jinja2Templates(directory=os.path.join(RACINE, "templates"))
 gabarits.env.autoescape = True
 
+# Les lieux sont des objets (libellé, locution, pendant d'ombre) ; la base ne
+# stocke que le libellé, l'assignation ne raisonne donc que sur cette liste.
+LIBELLES_LIEUX = [l["libelle"] for l in CONFIG["lieux"]]
+
 securite = HTTPBasic()
 
 
@@ -97,9 +101,11 @@ def _lancer_generation(identifiant: str) -> None:
             portrait = ia.generer(
                 CONFIG,
                 {
-                    "lieu": ligne["lieu"],
+                    "lieu": next((l for l in CONFIG["lieux"]
+                                   if l["libelle"] == ligne["lieu"]), ligne["lieu"]),
                     "reponses": json.loads(ligne["reponses_json"]),
                     "noms_interdits": interdits,
+                    "noms_fictifs_pris": bd.noms_fictifs_pris(sauf=identifiant),
                     "couple": COUPLE,
                 },
             )
@@ -163,10 +169,10 @@ async def valider(request: Request):
     # Le choix se fait avant la génération : celui qui veut en dire plus n'attend
     # pas deux fois, et on ne lui demande pas de rouvrir un cadeau déjà ouvert.
     if donnees.get("suite") == "bonus":
-        identifiant = bd.creer(prenom, nom, reponses, CONFIG["lieux"], etat="brouillon")
+        identifiant = bd.creer(prenom, nom, reponses, LIBELLES_LIEUX, etat="brouillon")
         return RedirectResponse(f"/bonus/{identifiant}/questions", status_code=303)
 
-    identifiant = bd.creer(prenom, nom, reponses, CONFIG["lieux"])
+    identifiant = bd.creer(prenom, nom, reponses, LIBELLES_LIEUX)
     _lancer_generation(identifiant)
     return RedirectResponse(f"/portrait/{identifiant}", status_code=303)
 
@@ -199,7 +205,11 @@ def regenerer(identifiant: str):
     ligne = bd.lire(identifiant)
     if ligne is None:
         raise HTTPException(status_code=404, detail="Introuvable")
-    if ligne["nb_generations"] < MAX_GENERATIONS:
+    # Un échec ne débite rien : on autorise la relance tant que le quota de
+    # portraits obtenus n'est pas atteint, avec un garde-fou technique contre
+    # la boucle infinie d'appels payants.
+    if (ligne["nb_generations"] < MAX_GENERATIONS
+            and ligne["nb_tentatives"] < bd.MAX_TENTATIVES):
         _lancer_generation(identifiant)
     return RedirectResponse(f"/portrait/{identifiant}", status_code=303)
 
@@ -320,6 +330,7 @@ def export(_: str = Depends(admin)):
                 "duree_s": p["duree_s"],
                 "jetons": [p["jetons_entree"], p["jetons_sortie"]],
                 "nb_generations": p["nb_generations"],
+                "nb_tentatives": p["nb_tentatives"],
                 "etat": p["etat"],
                 "derniere_erreur": p["derniere_erreur"],
             }

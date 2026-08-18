@@ -35,7 +35,7 @@ assert "ANTHROPIC_API_KEY absente" in r.text, r.text[:400]
 # les réponses survivent à l'échec de génération : c'est le point important
 ligne = bd.lire(uuid)
 assert "opérateur du trafic" in ligne["reponses_json"]
-assert ligne["lieu"] in main.CONFIG["lieux"]
+assert ligne["lieu"] in main.LIBELLES_LIEUX
 
 # pages protégées
 auth = {"Authorization": "Basic " + base64.b64encode(b"a:secret").decode()}
@@ -55,7 +55,7 @@ assert bd.lire(uuid)["etage"] == 2 and "on verra bien" in bd.lire(uuid)["reponse
 
 # répartition des lieux : 30 créations, écart maximal de 1
 for i in range(30):
-    bd.creer(f"P{i}", "X", {"metier": "x"}, main.CONFIG["lieux"])
+    bd.creer(f"P{i}", "X", {"metier": "x"}, main.LIBELLES_LIEUX)
 from collections import Counter
 compte = Counter(p["lieu"] for p in bd.lister())
 print("répartition :", sorted(compte.values()))
@@ -246,7 +246,7 @@ assert "jamais humiliant" in contrat
 print("TOUT PASSE (6)")
 
 # --- Un échec technique ne débite pas le quota de l'invité ------------------
-uid7 = bd.creer("Gil", "Test", {"metier": "x"}, main.CONFIG["lieux"])
+uid7 = bd.creer("Gil", "Test", {"metier": "x"}, main.LIBELLES_LIEUX)
 for _ in range(4):
     bd.enregistrer_echec(uid7, "529 overloaded_error")
 ligne = bd.lire(uid7)
@@ -273,7 +273,7 @@ assert bd.lire(uid7)["nb_tentatives"] == avant, "aucun appel au-delà du garde-f
 print("TOUT PASSE (7)")
 
 # --- Un échec de génération ne consomme aucun crédit ------------------------
-uid7 = bd.creer("Gil", "Test", {"metier": "x"}, main.CONFIG["lieux"])
+uid7 = bd.creer("Gil", "Test", {"metier": "x"}, main.LIBELLES_LIEUX)
 for _ in range(5):
     bd.enregistrer_echec(uid7, "HTTP 529 — overloaded_error")
 assert bd.lire(uid7)["nb_generations"] == 0, "cinq pannes, zéro crédit débité"
@@ -298,3 +298,35 @@ assert "ne dit rien du lien de parenté" in msg, "le sélecteur est désambiguï
 assert "Famille de Delphine" in msg
 assert "N'étends jamais un lien" in main.CONFIG["contrat"]
 print("TOUT PASSE (7)")
+
+# --- Locution, pendant d'ombre, unicité des noms fictifs --------------------
+lieu_mt = next(l for l in main.CONFIG["lieux"] if l["libelle"] == "Minas Tirith")
+base = {"metier": "postier", "attachement": "La nature", "allegeance": "L'Ombre"}
+
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": lieu_mt, "reponses": base, "noms_interdits": [], "couple": main.COUPLE})
+assert "à Minas Tirith" in msg and "la préposition est imposée" in msg
+assert "Osgiliath" not in msg, "un humain de l'Ombre reste dans la région"
+
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": lieu_mt, "reponses": {**base, "monstre": "Un monstre, et j'assume"},
+    "noms_interdits": [], "couple": main.COUPLE})
+assert "ruines d'Osgiliath" in msg, "la créature est reléguée aux abords"
+assert "n'y est pas admise" in msg
+
+comte = next(l for l in main.CONFIG["lieux"] if l["libelle"] == "La Comté")
+assert "en Comté" in ia._construire_message(main.CONFIG, {
+    "lieu": comte, "reponses": base, "noms_interdits": [], "couple": main.COUPLE})
+
+# noms fictifs déjà attribués
+uid8 = bd.creer("Gil", "Test", {"metier": "x"}, main.LIBELLES_LIEUX)
+bd.enregistrer_portrait(uid8, {"nom_fictif": "Skarn Rouille", "peuple": "orque",
+                               "portrait": "p", "indice": "i", "fuites_noms": []})
+pris = bd.noms_fictifs_pris()
+assert "Skarn Rouille" in pris
+assert "Skarn Rouille" not in bd.noms_fictifs_pris(sauf=uid8), "on ne s'interdit pas son propre nom"
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": comte, "reponses": base, "noms_interdits": [],
+    "noms_fictifs_pris": pris, "couple": main.COUPLE})
+assert "NOMS FICTIFS DÉJÀ ATTRIBUÉS" in msg and "Skarn Rouille" in msg
+print("TOUT PASSE (8)")

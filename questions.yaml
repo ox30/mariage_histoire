@@ -14,16 +14,40 @@
 # ---------------------------------------------------------------------------
 
 lieux:
-  - La Comté
-  - Fondcombe
-  - Les Mines de la Moria
-  - La Lothlórien
-  - Isengard
-  - Edoras
-  - Minas Tirith
-  - La Forêt Noire
-  - Les Havres Gris
-  - Cirith Ungol
+  # libelle    : le nom de la région, affiché et porté par la carte
+  # locution   : la forme grammaticale correcte — « en Comté », « à Minas Tirith »
+  # ombre      : le lieu voisin où se tiennent les créatures ; un orque ne se
+  #              promène pas dans Minas Tirith, il rôde à sa porte
+  - libelle: La Comté
+    locution: en Comté
+    ombre: les Hauts des Galgals, à ses lisières
+  - libelle: Fondcombe
+    locution: à Fondcombe
+    ombre: les gorges de la Bruinen, en contrebas
+  - libelle: Les Mines de la Moria
+    locution: dans les Mines de la Moria
+    ombre: les profondeurs de la Moria
+  - libelle: La Lothlórien
+    locution: en Lothlórien
+    ombre: les marges obscures de Fangorn
+  - libelle: Isengard
+    locution: à Isengard
+    ombre: les fosses d'Isengard
+  - libelle: Edoras
+    locution: à Edoras
+    ombre: les campements du Gué de l'Isen
+  - libelle: Minas Tirith
+    locution: à Minas Tirith
+    ombre: les ruines d'Osgiliath, de l'autre rive
+  - libelle: La Forêt Noire
+    locution: en Forêt Noire
+    ombre: les toiles du sud de la Forêt Noire
+  - libelle: Les Havres Gris
+    locution: aux Havres Gris
+    ombre: les récifs battus au nord des Havres
+  - libelle: Cirith Ungol
+    locution: à Cirith Ungol
+    ombre: la tour de Cirith Ungol
 
 # Six peuples de la Lumière, quatre peuples humains de l'Ombre, six créatures.
 # Le peuple est toujours déduit, jamais choisi. Les créatures ne s'ouvrent que

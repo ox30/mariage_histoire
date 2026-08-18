@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 import main, base_donnees as bd
 ctx = TestClient(main.app); ctx.__enter__(); c = ctx
 
-uid = bd.creer("Marie", "Dupont", {"metier": "infirmière", "attachement": "Ma famille"}, main.CONFIG["lieux"])
+uid = bd.creer("Marie", "Dupont", {"metier": "infirmière", "attachement": "Ma famille"}, main.LIBELLES_LIEUX)
 bd.enregistrer_portrait(uid, {
     "nom_fictif": "Elwen la Guérisseuse", "peuple": "homme",
     "portrait": "Premier paragraphe.\n\nSecond paragraphe avec un < et une \" quote.",
@@ -48,7 +48,7 @@ print("TOUT PASSE")
 # --- Révélation : souvenir et vœu montrés tels quels -------------------------
 uid2 = bd.creer("Jo", "Test", {"souvenir": "on a raté le dernier train",
                                "souhait": "plein de belles choses"},
-                main.CONFIG["lieux"])
+                main.LIBELLES_LIEUX)
 bd.enregistrer_portrait(uid2, {"nom_fictif": "Thorald", "peuple": "nain",
                                "portrait": "p", "indice": "i", "fuites_noms": []})
 r = c.get("/deviner", headers=auth)

@@ -59,8 +59,23 @@ def _construire_message(config: dict, participation: dict) -> str:
             "sans le relever et sans le reproduire.",
             "",
         ]
+    lieu = participation["lieu"]
+    if isinstance(lieu, str):
+        lieu = {"libelle": lieu, "locution": f"à {lieu}", "ombre": None}
+    monstre = str(participation["reponses"].get("monstre", "")).startswith("Un monstre")
+    if monstre and lieu.get("ombre"):
+        situation = (
+            f"RÉGION ASSIGNÉE : {lieu['libelle']}. La créature n'y est pas admise : "
+            f"elle se tient {lieu['ombre']}, aux abords, et c'est de là qu'elle "
+            "observe la région. Écris la scène depuis ce voisinage."
+        )
+    else:
+        situation = (
+            f"RÉGION ASSIGNÉE : {lieu['libelle']}. Écris « {lieu['locution']} » "
+            "et non une autre forme : la préposition est imposée."
+        )
     lignes += [
-        f"LIEU DÉJÀ ASSIGNÉ PAR LE SERVEUR : {participation['lieu']}",
+        situation,
         "C'est le décor du portrait, pas son sujet. Le personnage y a été",
         "convoqué et ne l'a pas choisi — mais n'ouvre pas le portrait sur cette",
         "convocation : commence par le personnage, son geste ou sa réputation,",
@@ -132,6 +147,15 @@ def _construire_message(config: dict, participation: dict) -> str:
         "NOMS RÉELS STRICTEMENT INTERDITS EN SORTIE :",
         ", ".join(participation["noms_interdits"]) or "(aucun)",
     ]
+    deja = participation.get("noms_fictifs_pris") or []
+    if deja:
+        lignes += [
+            "",
+            "NOMS FICTIFS DÉJÀ ATTRIBUÉS — n'en reprends aucun, ni le nom entier "
+            "ni l'un de ses mots : deux personnages homonymes seraient "
+            "indiscernables sur la carte.",
+            ", ".join(deja),
+        ]
     return "\n".join(lignes)
 
 
@@ -148,10 +172,11 @@ def generer(config: dict, participation: dict) -> dict:
     modele = os.environ.get("MODELE_IA", MODELE_DEFAUT)
     corps = {
         "model": modele,
-        # 150 mots de portrait plus les trois autres champs tournent autour de
-        # 700 jetons ; 1200 laissait le modèle se faire couper en pleine phrase,
-        # ce qui produisait un JSON tronqué et donc illisible.
-        "max_tokens": 2500,
+        # Le compteur de sortie dépasse largement le texte visible : 1786 jetons
+        # pour 144 mots ont été mesurés. 2500 se faisait encore tronquer sur les
+        # portraits de monstres ; 4000 laisse de la marge sans rien coûter, le
+        # plafond n'étant pas facturé mais seulement borné.
+        "max_tokens": 4000,
         "system": config["contrat"],
         "messages": [{"role": "user", "content": _construire_message(config, participation)}],
     }
@@ -200,6 +225,15 @@ def generer(config: dict, participation: dict) -> dict:
         manquants = [c for c in ("nom_fictif", "peuple", "portrait", "indice") if not portrait.get(c)]
         if manquants:
             derniere_erreur = f"champs manquants : {', '.join(manquants)}"
+            continue
+
+        pris = {_normaliser(n) for n in (participation.get("noms_fictifs_pris") or [])}
+        mots_pris = {m for n in (participation.get("noms_fictifs_pris") or [])
+                     for m in map(_normaliser, n.split()) if len(m) >= 4}
+        propose = _normaliser(portrait["nom_fictif"])
+        mots_proposes = {m for m in map(_normaliser, portrait["nom_fictif"].split()) if len(m) >= 4}
+        if propose in pris or (mots_proposes & mots_pris):
+            derniere_erreur = f"nom fictif déjà attribué : {portrait['nom_fictif']}"
             continue
 
         peuple = _normaliser(portrait["peuple"])

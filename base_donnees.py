@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS participation (
     jetons_entree     INTEGER,
     jetons_sortie     INTEGER,
     nb_generations    INTEGER NOT NULL DEFAULT 0,
+    nb_tentatives     INTEGER NOT NULL DEFAULT 0,
     etat              TEXT NOT NULL DEFAULT 'en_attente',
     derniere_erreur   TEXT,
     validee           INTEGER NOT NULL DEFAULT 0,
@@ -63,9 +64,20 @@ def connexion() -> sqlite3.Connection:
     return cnx
 
 
+# Un échec technique ne coûte rien à l'invité, mais il ne doit pas non plus
+# autoriser une boucle infinie d'appels payants. Deux compteurs distincts :
+# `nb_generations` = portraits réellement obtenus, débité du quota ;
+# `nb_tentatives`  = appels tentés, garde-fou technique.
+MAX_TENTATIVES = 10
+
+
 def initialiser() -> None:
     with connexion() as cnx:
         cnx.executescript(SCHEMA)
+        colonnes = {r["name"] for r in cnx.execute("PRAGMA table_info(participation)")}
+        if "nb_tentatives" not in colonnes:
+            cnx.execute("ALTER TABLE participation ADD COLUMN "
+                        "nb_tentatives INTEGER NOT NULL DEFAULT 0")
 
 
 def assigner_lieu(cnx: sqlite3.Connection, lieux: list[str]) -> str:
@@ -121,6 +133,15 @@ def tous_les_prenoms() -> list[str]:
     return mots
 
 
+def noms_fictifs_pris(sauf: str | None = None) -> list[str]:
+    """Les noms fictifs déjà attribués, pour éviter deux homonymes sur la carte."""
+    with connexion() as cnx:
+        lignes = cnx.execute(
+            "SELECT uuid, nom_fictif FROM participation WHERE nom_fictif IS NOT NULL"
+        ).fetchall()
+    return [l["nom_fictif"] for l in lignes if l["uuid"] != sauf]
+
+
 def enregistrer_portrait(identifiant: str, portrait: dict) -> None:
     with connexion() as cnx:
         cnx.execute(
@@ -128,6 +149,7 @@ def enregistrer_portrait(identifiant: str, portrait: dict) -> None:
                  nom_fictif=?, peuple=?, portrait=?, indice=?, fuites_noms=?,
                  modele=?, duree_s=?, jetons_entree=?, jetons_sortie=?,
                  nb_generations = nb_generations + 1,
+                 nb_tentatives = nb_tentatives + 1,
                  etat='prete', derniere_erreur=NULL, modifiee_le=?
                WHERE uuid=?""",
             (portrait["nom_fictif"], portrait["peuple"], portrait["portrait"],
@@ -141,7 +163,8 @@ def enregistrer_echec(identifiant: str, erreur: str) -> None:
     with connexion() as cnx:
         cnx.execute(
             """UPDATE participation
-               SET etat='echouee', derniere_erreur=?, nb_generations = nb_generations + 1,
+               SET etat='echouee', derniere_erreur=?,
+                   nb_tentatives = nb_tentatives + 1,
                    modifiee_le=?
                WHERE uuid=?""",
             (erreur[:500], maintenant(), identifiant),
