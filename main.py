@@ -303,9 +303,26 @@ def deviner(request: Request, _: str = Depends(admin)):
     )
 
 
+def _lieu_affiche(ligne) -> str:
+    """« Minas Tirith / les ruines d'Osgiliath » pour une créature.
+
+    La région reste unique — c'est elle qui découpe les chapitres. Le pendant
+    d'ombre n'est qu'un décor de texte, mais l'administrateur doit savoir
+    lequel des deux a servi.
+    """
+    region = next((l for l in CONFIG["lieux"] if l["libelle"] == ligne["lieu"]), None)
+    if region is None:
+        return ligne["lieu"]
+    reponses = json.loads(ligne["reponses_json"])
+    monstre = str(reponses.get("monstre", "")).startswith("Un monstre")
+    if monstre and region.get("ombre"):
+        return f"{region['libelle']} / {region['ombre']}"
+    return region["libelle"]
+
+
 @app.get("/tableau", response_class=HTMLResponse)
 def tableau(request: Request, _: str = Depends(admin)):
-    participations = bd.lister()
+    participations = [dict(p) | {"lieu_affiche": _lieu_affiche(p)} for p in bd.lister()]
     jetons_entree = sum(p["jetons_entree"] or 0 for p in participations)
     jetons_sortie = sum(p["jetons_sortie"] or 0 for p in participations)
     durees = [p["duree_s"] for p in participations if p["duree_s"]]

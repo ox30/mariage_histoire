@@ -39,7 +39,7 @@
       <td>{{ p.prenom }} {{ p.nom }}</td>
       <td>{{ p.nom_fictif or "—" }}</td>
       <td>{{ p.peuple or "—" }}</td>
-      <td>{{ p.lieu }}</td>
+      <td>{{ p.lieu_affiche }}</td>
       <td class="chiffre">{{ p.etage }}</td>
       <td class="chiffre">{{ p.nb_generations }}</td>
       <td class="chiffre">{{ p.duree_s or "—" }}</td>
@@ -50,7 +50,9 @@
 
   <h2>Répartition sur les lieux</h2>
   <p class="discret">Le lieu le moins peuplé, tirage au sort en cas d'égalité.
-     Les écarts ne doivent jamais dépasser une personne.</p>
+     Les écarts ne doivent jamais dépasser une personne. Le décompte porte sur
+     la <strong>région</strong> : « Minas Tirith / les ruines d'Osgiliath »
+     compte pour Minas Tirith, puisque c'est la région qui fait le chapitre.</p>
   <table>
     {% for lieu, groupe in participations|groupby("lieu") %}
     <tr><td>{{ lieu }}</td><td class="chiffre">{{ groupe|length }}</td></tr>

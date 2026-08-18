@@ -65,3 +65,28 @@ r = c.get("/deviner", headers=auth)
 assert "J.-P. G." in r.text, "initiales d'un prénom composé"
 assert "Jean-Pierre Gagnebin" in r.text, "nom capitalisé à la révélation"
 print("TOUT PASSE (ter)")
+
+# --- Le tableau apparie région et pendant d'ombre ---------------------------
+uid4 = bd.creer("Mons", "Tre", {"metier": "x", "allegeance": "L'Ombre",
+                                "monstre": "Un monstre, et j'assume"},
+                ["Minas Tirith"])
+bd.enregistrer_portrait(uid4, {"nom_fictif": "Grokna", "peuple": "orque",
+                               "portrait": "p", "indice": "i", "fuites_noms": []})
+uid5 = bd.creer("Seig", "Neur", {"metier": "x", "allegeance": "L'Ombre",
+                                 "monstre": "Un seigneur redouté, mais un seigneur"},
+                ["Minas Tirith"])
+bd.enregistrer_portrait(uid5, {"nom_fictif": "Zahrun", "peuple": "Haradrim",
+                               "portrait": "p", "indice": "i", "fuites_noms": []})
+r = c.get("/tableau", headers=auth)
+import re as _re
+cellules = [c.replace("&#39;", "'")
+            for c in _re.findall(r"<td>([^<]*Minas[^<]*)</td>", r.text)]
+assert any(c.startswith("Minas Tirith / les ruines d'Osgiliath") for c in cellules), \
+    "créature appariée à son pendant d'ombre"
+assert "Minas Tirith" in cellules, "le seigneur de l'Ombre reste dans la région"
+assert sum(1 for c in cellules if "/" in c) == 1, "un seul apparié : la créature"
+assert "c'est la région qui fait le chapitre" in r.text
+# la répartition compte la région, pas le pendant
+lignes = [l for l in bd.lister() if l["lieu"] == "Minas Tirith"]
+assert len(lignes) == 2, "les deux comptent pour Minas Tirith"
+print("TOUT PASSE (quater)")
