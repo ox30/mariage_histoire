@@ -409,3 +409,29 @@ ligne = bd.lire(uid10)
 assert ligne["prenom"] == "Jean-Pierre" and ligne["nom"] == "Gagnebin"
 assert "Jean-Pierre" in bd.tous_les_prenoms() and "Gagnebin" in bd.tous_les_prenoms()
 print("TOUT PASSE (12)")
+
+# --- Genre du personnage ----------------------------------------------------
+# Cas réel du 18 août : « Jean-Pascal » a produit un personnage féminin.
+r = c2.post("/questionnaire", data={"prenom": "jean-pascal", "nom": "van der maas",
+                                    "genre": "masculin"})
+assert 'name="genre" value="masculin"' in r.text, "le genre traverse le questionnaire"
+
+d = dict(donnees); d.update({"prenom": "jean-pascal", "nom": "van der maas",
+                             "genre": "masculin", "suite": "maintenant"})
+uid11 = c2.post("/valider", data=d, follow_redirects=False).headers["location"].split("/")[-1]
+ligne = bd.lire(uid11)
+assert ligne["genre"] == "masculin"
+assert ligne["prenom"] == "Jean-Pascal" and ligne["nom"] == "van der Maas"
+
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": comte, "reponses": _json.loads(ligne["reponses_json"]),
+    "noms_interdits": [], "couple": main.COUPLE, "genre": "masculin"})
+assert "GENRE DU PERSONNAGE : masculin" in msg and "tous les accords suivent" in msg
+
+# « peu importe » ne contraint rien
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": comte, "reponses": {"metier": "x"}, "noms_interdits": [],
+    "couple": main.COUPLE, "genre": None})
+assert "GENRE DU PERSONNAGE" not in msg
+assert "Un prénom réel ne" in main.CONFIG["contrat"]
+print("TOUT PASSE (13)")

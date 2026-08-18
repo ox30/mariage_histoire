@@ -114,6 +114,7 @@ def _lancer_generation(identifiant: str) -> None:
                     "reponses": json.loads(ligne["reponses_json"]),
                     "noms_interdits": interdits,
                     "noms_fictifs_pris": bd.noms_fictifs_pris(sauf=identifiant),
+                    "genre": ligne["genre"],
                     "couple": COUPLE,
                 },
             )
@@ -149,13 +150,15 @@ def accueil(request: Request):
 
 
 @app.post("/questionnaire", response_class=HTMLResponse)
-def questionnaire(request: Request, prenom: str = Form(...), nom: str = Form(...)):
+def questionnaire(request: Request, prenom: str = Form(...), nom: str = Form(...),
+                  genre: str = Form("")):
     return gabarits.TemplateResponse(
         "questionnaire.html",
         {
             "request": request,
             "prenom": prenom.strip()[:40],
             "nom": nom.strip()[:40],
+            "genre": genre if genre in ("masculin", "feminin") else "",
             "questions": CONFIG["obligatoires"],
             "action": "/valider",
             "titre": "Six questions",
@@ -173,15 +176,18 @@ async def valider(request: Request):
     nom = (donnees.get("nom") or "").strip()[:40]
     if not prenom or not nom:
         return RedirectResponse("/", status_code=303)
+    genre = (donnees.get("genre") or "").strip()
+    genre = genre if genre in ("masculin", "feminin") else None
     reponses = _reponses_du_formulaire(donnees, "obligatoires")
 
     # Le choix se fait avant la génération : celui qui veut en dire plus n'attend
     # pas deux fois, et on ne lui demande pas de rouvrir un cadeau déjà ouvert.
     if donnees.get("suite") == "bonus":
-        identifiant = bd.creer(prenom, nom, reponses, LIBELLES_LIEUX, etat="brouillon")
+        identifiant = bd.creer(prenom, nom, reponses, LIBELLES_LIEUX,
+                               etat="brouillon", genre=genre)
         return RedirectResponse(f"/bonus/{identifiant}/questions", status_code=303)
 
-    identifiant = bd.creer(prenom, nom, reponses, LIBELLES_LIEUX)
+    identifiant = bd.creer(prenom, nom, reponses, LIBELLES_LIEUX, genre=genre)
     _lancer_generation(identifiant)
     return RedirectResponse(f"/portrait/{identifiant}", status_code=303)
 

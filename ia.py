@@ -71,6 +71,13 @@ def _construire_message(config: dict, participation: dict) -> str:
             "sans le relever et sans le reproduire.",
             "",
         ]
+    genre = participation.get("genre")
+    if genre in ("masculin", "feminin"):
+        lignes += [
+            f"GENRE DU PERSONNAGE : {genre}. Le nom fictif, les pronoms et tous "
+            "les accords suivent ce genre, sans exception.",
+            "",
+        ]
     lieu = participation["lieu"]
     if isinstance(lieu, str):
         lieu = {"libelle": lieu, "locution": f"à {lieu}", "ombre": None}

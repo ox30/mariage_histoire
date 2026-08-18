@@ -14,7 +14,24 @@
               autocomplete="given-name"></p>
     <p><input type="text" name="nom" placeholder="Nom" maxlength="40" required
               autocomplete="family-name"></p>
+    <input type="hidden" name="genre" id="champ-genre" value="">
+    <p class="exemple" style="margin:1.2rem 0 0.6rem">Le personnage sera écrit…</p>
+    <button type="button" class="choix genre" data-valeur="masculin">Au masculin</button>
+    <button type="button" class="choix genre" data-valeur="feminin">Au féminin</button>
+    <button type="button" class="choix genre" data-valeur="">Peu importe</button>
+
     <button class="action" type="submit">Commencer</button>
   </form>
 </div>
+<script>
+document.querySelectorAll(".genre").forEach(function (b) {
+  b.addEventListener("click", function () {
+    document.querySelectorAll(".genre").forEach(function (x) {
+      x.classList.remove("retenu");
+    });
+    b.classList.add("retenu");
+    document.getElementById("champ-genre").value = b.dataset.valeur;
+  });
+});
+</script>
 {% endblock %}

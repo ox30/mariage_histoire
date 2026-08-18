@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS participation (
     uuid              TEXT PRIMARY KEY,
     prenom            TEXT NOT NULL,
     nom               TEXT NOT NULL,
+    genre             TEXT,
     lieu              TEXT NOT NULL,
     reponses_json     TEXT NOT NULL,
     etage             INTEGER NOT NULL DEFAULT 1,
@@ -76,6 +77,12 @@ MAX_TENTATIVES = 10
 def initialiser() -> None:
     with connexion() as cnx:
         cnx.executescript(SCHEMA)
+        # Migration légère : ajouter une colonne à une base existante plutôt que
+        # d'exiger sa suppression. L'application réelle utilisera Alembic.
+        colonnes = {c["name"] for c in cnx.execute("PRAGMA table_info(participation)")}
+        for nom_colonne, definition in (("genre", "TEXT"),):
+            if nom_colonne not in colonnes:
+                cnx.execute(f"ALTER TABLE participation ADD COLUMN {nom_colonne} {definition}")
         colonnes = {r["name"] for r in cnx.execute("PRAGMA table_info(participation)")}
         if "nb_tentatives" not in colonnes:
             cnx.execute("ALTER TABLE participation ADD COLUMN "
@@ -97,7 +104,7 @@ def assigner_lieu(cnx: sqlite3.Connection, lieux: list[str]) -> str:
 
 
 def creer(prenom: str, nom: str, reponses: dict, lieux: list[str],
-          etat: str = "en_attente") -> str:
+          etat: str = "en_attente", genre: str | None = None) -> str:
     # Capitalisé une fois, à l'entrée : ce qui est stocké est ce qui sera montré
     # aux mariés, et c'est aussi ce qui alimente la liste des noms interdits.
     prenom, nom = noms.capitaliser(prenom), noms.capitaliser(nom)
@@ -107,10 +114,10 @@ def creer(prenom: str, nom: str, reponses: dict, lieux: list[str],
         lieu = assigner_lieu(cnx, lieux)
         cnx.execute(
             """INSERT INTO participation
-               (uuid, prenom, nom, lieu, reponses_json, etat, creee_le, modifiee_le)
-               VALUES (?,?,?,?,?,?,?,?)""",
-            (identifiant, prenom, nom, lieu, json.dumps(reponses, ensure_ascii=False),
-             etat, horodatage, horodatage),
+               (uuid, prenom, nom, genre, lieu, reponses_json, etat, creee_le, modifiee_le)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (identifiant, prenom, nom, genre or None, lieu,
+             json.dumps(reponses, ensure_ascii=False), etat, horodatage, horodatage),
         )
     return identifiant
 
