@@ -59,7 +59,7 @@
       <input type="hidden" name="suite" id="champ-suite" value="maintenant">
       {% if bifurcation %}
         <p class="question">Le Conseil peut délibérer.</p>
-        <p class="exemple">Ou vous pouvez en dire plus : six questions de plus,
+        <p class="exemple">Ou vous pouvez en dire plus : {{ nb_bonus_mot }} questions de plus,
            et votre chronique sera plus riche — les mariés auront davantage à
            deviner.</p>
         <button type="submit" class="action envoi" data-suite="maintenant"
@@ -67,8 +67,8 @@
           Créer mon personnage
         </button>
         <button type="submit" class="action sobre envoi" data-suite="bonus"
-                data-attente="Encore six questions…">
-          Six questions de plus
+                data-attente="Encore {{ nb_bonus_mot }} questions…">
+          {{ nb_bonus_mot|capitalize }} questions de plus
         </button>
       {% else %}
         <p class="question">Le Conseil peut délibérer.</p>

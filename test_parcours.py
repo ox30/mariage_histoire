@@ -10,7 +10,7 @@ ctx = TestClient(main.app); ctx.__enter__(); c = ctx
 assert c.get("/").status_code == 200, "accueil"
 r = c.post("/questionnaire", data={"prenom": "Florian", "nom": "Test"})
 assert r.status_code == 200 and "Quel est ton métier" in r.text, "questionnaire"
-assert r.text.count('class="ecran') == 9, "6 questions + 2 conditionnelles + récapitulatif"
+assert r.text.count('class="ecran') == 10, "7 questions + 2 conditionnelles + récapitulatif"
 
 reponses = {
     "prenom": "Florian", "nom": "Test",
@@ -102,7 +102,7 @@ uid3 = r.headers["location"].split("/")[2]
 assert bd.lire(uid3)["etat"] == "brouillon", bd.lire(uid3)["etat"]
 
 r = c2.get(f"/portrait/{uid3}")
-assert "Il reste six questions" in r.text, "état brouillon annoncé"
+assert "Il reste cinq questions" in r.text, "état brouillon annoncé"
 
 r = c2.get(f"/bonus/{uid3}/questions")
 assert "sans ces questions" in r.text and "facultatif = true" in r.text
@@ -189,6 +189,7 @@ assert "Mes clubs de golf" in bloc_portrait
 assert "Famille de la mariée" in bloc_portrait, "le lien nourrit le portrait, transposé"
 assert "Tout le bonheur du monde" not in msg, "le vœu n'atteint jamais le modèle"
 assert "souhaites-tu" not in msg, "ni la question du vœu"
+assert "Que souhaites-tu" not in msg
 # le décompte annoncé ne compte que ce qui nourrit le portrait
 assert "5 complémentaires" in msg, msg[-400:]
 
@@ -351,3 +352,24 @@ assert ia.MODELE_DEFAUT == "claude-sonnet-5"
 import inspect
 assert '"max_tokens": 8000' in inspect.getsource(ia.generer)
 print("TOUT PASSE (9)")
+
+# --- Le vœu est au premier étage, et n'atteint jamais le modèle -------------
+assert [q["cle"] for q in main.CONFIG["obligatoires"]][-1] == "souhait", \
+    "le vœu clôt le premier étage"
+assert "souhait" not in [q["cle"] for q in main.CONFIG["bonus"]]
+assert main.NB_BONUS == 5 and main.NB_BONUS_MOT == "cinq"
+
+r = c2.post("/questionnaire", data={"prenom": "Hal", "nom": "Test"})
+assert "Que souhaites-tu à Delphine et Jérémy" in r.text.replace("&#39;", "'")
+assert "cinq questions de plus" in r.text.lower()
+
+avec_voeu = dict(donnees)
+avec_voeu.update({"prenom": "Hal", "nom": "Test", "souhait": "Tout le bonheur du monde",
+                  "suite": "maintenant"})
+uid9 = c2.post("/valider", data=avec_voeu, follow_redirects=False).headers["location"].split("/")[-1]
+stocke = bd.lire(uid9)["reponses_json"]
+assert "Tout le bonheur du monde" in stocke, "le vœu est bien enregistré dès l'étage 1"
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": comte, "reponses": _json.loads(stocke), "noms_interdits": [], "couple": main.COUPLE})
+assert "Tout le bonheur du monde" not in msg, "et n'atteint toujours pas le modèle"
+print("TOUT PASSE (10)")

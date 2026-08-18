@@ -72,6 +72,13 @@ gabarits.env.autoescape = True
 # stocke que le libellé, l'assignation ne raisonne donc que sur cette liste.
 LIBELLES_LIEUX = [l["libelle"] for l in CONFIG["lieux"]]
 
+# Les libellés annonçant « N questions de plus » sont dérivés de la
+# configuration : déplacer une question d'un étage à l'autre ne doit jamais
+# obliger à corriger un texte à la main.
+NB_BONUS = len(CONFIG["bonus"])
+NB_BONUS_MOT = {1: "une", 2: "deux", 3: "trois", 4: "quatre", 5: "cinq",
+                6: "six", 7: "sept", 8: "huit"}.get(NB_BONUS, str(NB_BONUS))
+
 securite = HTTPBasic()
 
 
@@ -152,6 +159,7 @@ def questionnaire(request: Request, prenom: str = Form(...), nom: str = Form(...
             "action": "/valider",
             "titre": "Six questions",
             "bifurcation": True,
+            "nb_bonus_mot": NB_BONUS_MOT,
             "facultatif": False,
         },
     )
@@ -184,7 +192,8 @@ def portrait(request: Request, identifiant: str):
         raise HTTPException(status_code=404, detail="Introuvable")
     return gabarits.TemplateResponse(
         "portrait.html",
-        {"request": request, "p": ligne, "max_generations": MAX_GENERATIONS},
+        {"request": request, "p": ligne, "max_generations": MAX_GENERATIONS,
+         "nb_bonus_mot": NB_BONUS_MOT},
     )
 
 
@@ -196,7 +205,8 @@ def etat_portrait(request: Request, identifiant: str):
         raise HTTPException(status_code=404, detail="Introuvable")
     return gabarits.TemplateResponse(
         "fragment_portrait.html",
-        {"request": request, "p": ligne, "max_generations": MAX_GENERATIONS},
+        {"request": request, "p": ligne, "max_generations": MAX_GENERATIONS,
+         "nb_bonus_mot": NB_BONUS_MOT},
     )
 
 
@@ -228,7 +238,8 @@ def proposer_bonus(request: Request, identifiant: str):
     if ligne["etage"] == 2:
         return RedirectResponse("/fin", status_code=303)
     return gabarits.TemplateResponse(
-        "bonus_intro.html", {"request": request, "p": ligne}
+        "bonus_intro.html",
+        {"request": request, "p": ligne, "nb_bonus_mot": NB_BONUS_MOT}
     )
 
 
@@ -245,8 +256,9 @@ def questions_bonus(request: Request, identifiant: str):
             "nom": ligne["nom"],
             "questions": CONFIG["bonus"],
             "action": f"/bonus/{identifiant}",
-            "titre": "Six de plus",
+            "titre": f"{NB_BONUS_MOT.capitalize()} de plus",
             "bifurcation": False,
+            "nb_bonus_mot": NB_BONUS_MOT,
             "facultatif": True,
         },
     )

@@ -168,6 +168,14 @@ obligatoires:
     exemple: ce qui te vient, même court. C'est ce qu'ils liront.
     limite: 300
 
+  - cle: souhait
+    role: montré tel quel aux mariés à la révélation ; jamais transmis au modèle
+    usage: revelation
+    type: texte_long
+    question: Que souhaites-tu à {mariee} et {marie} ?
+    exemple: une phrase suffit
+    limite: 300
+
 # --- Second étage : six questions complémentaires ---------------------------
 
 bonus:
@@ -220,13 +228,6 @@ bonus:
     exemple: celle dont tes proches se moquent
     limite: 80
 
-  - cle: souhait
-    role: montré tel quel aux mariés à la révélation
-    usage: revelation
-    type: texte_long
-    question: Que souhaites-tu à {mariee} et {marie} ?
-    exemple: une phrase suffit
-    limite: 300
 
 # --- Contrat de style transmis au modèle ------------------------------------
 

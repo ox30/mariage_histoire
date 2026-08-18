@@ -1,6 +1,6 @@
 {% if p.etat == "brouillon" %}
   <p class="surtitre">{{ p.lieu }}</p>
-  <h1>Il reste six questions</h1>
+  <h1>Il reste {{ nb_bonus_mot }} questions</h1>
   <p>Vos six premières réponses sont enregistrées. Votre chronique s'écrira dès
      que vous aurez terminé — ou tout de suite, si vous préférez.</p>
   <a class="action" href="/bonus/{{ p.uuid }}/questions">Continuer</a>
@@ -23,11 +23,11 @@
   <p>Vos réponses sont enregistrées, rien n'est perdu. La chronique s'écrira
      plus tard.</p>
   <div class="alerte"><strong>Détail technique :</strong> {{ p.derniere_erreur }}</div>
-  {% if p.nb_generations < max_generations %}
-    <form method="post" action="/portrait/{{ p.uuid }}/regenerer">
-      <button class="action" type="submit">Réessayer</button>
-    </form>
-  {% endif %}
+  <p class="discret">Cet échec ne vous a rien coûté : vos réécritures restent
+     entières.</p>
+  <form method="post" action="/portrait/{{ p.uuid }}/regenerer">
+    <button class="action" type="submit">Réessayer</button>
+  </form>
   <p><a class="action sobre" href="/fin">Terminer quand même</a></p>
 
 {% else %}
