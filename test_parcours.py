@@ -127,7 +127,7 @@ assert bd.lire(uid4)["etage"] == 2
 msg = ia._construire_message(main.CONFIG, {
     "lieu": "Edoras", "reponses": _json.loads(bd.lire(uid4)["reponses_json"]),
     "noms_interdits": [], "couple": main.COUPLE})
-assert "complémentaires" in msg and "laisse les autres" in msg
+assert "complémentaires" in msg and "LONGUEUR IMPOSÉE : 220 mots" in msg
 # on ne repropose pas le second étage à qui l'a déjà donné
 assert c2.get(f"/bonus/{uid4}", follow_redirects=False).status_code == 303
 print("TOUT PASSE (3)")
@@ -330,3 +330,24 @@ msg = ia._construire_message(main.CONFIG, {
     "noms_fictifs_pris": pris, "couple": main.COUPLE})
 assert "NOMS FICTIFS DÉJÀ ATTRIBUÉS" in msg and "Skarn Rouille" in msg
 print("TOUT PASSE (8)")
+
+# --- Longueur adaptée au volume de réponses --------------------------------
+court = ia._construire_message(main.CONFIG, {
+    "lieu": comte, "reponses": {"metier": "postier", "attachement": "La nature"},
+    "noms_interdits": [], "couple": main.COUPLE})
+assert "LONGUEUR IMPOSÉE : 150 mots" in court
+assert "sans complément" in court
+
+long_ = ia._construire_message(main.CONFIG, {
+    "lieu": comte,
+    "reponses": {"metier": "postier", "attachement": "La nature",
+                 "talent": "je chante", "phrase": "en avant", "lien": "Collègue"},
+    "noms_interdits": [], "couple": main.COUPLE})
+assert "LONGUEUR IMPOSÉE : 220 mots" in long_
+assert "Exploite-les toutes" in long_, "à douze réponses, plus de tri à opérer"
+assert "laisse les autres" not in long_
+
+assert ia.MODELE_DEFAUT == "claude-sonnet-5"
+import inspect
+assert '"max_tokens": 8000' in inspect.getsource(ia.generer)
+print("TOUT PASSE (9)")

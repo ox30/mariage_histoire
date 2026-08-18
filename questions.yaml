@@ -49,6 +49,13 @@ lieux:
     locution: à Cirith Ungol
     ombre: la tour de Cirith Ungol
 
+# Longueur du portrait, en mots. Six réponses tiennent en 150 mots ; douze
+# ancres demandent plus de place. Au-delà de 250, la lecture de cent chroniques
+# devient un travail : c'est la limite de lecture, pas la limite du modèle.
+mots_max:
+  sans_complement: 150
+  avec_complement: 220
+
 # Six peuples de la Lumière, quatre peuples humains de l'Ombre, six créatures.
 # Le peuple est toujours déduit, jamais choisi. Les créatures ne s'ouvrent que
 # sur consentement explicite de l'invité (question `monstre`).

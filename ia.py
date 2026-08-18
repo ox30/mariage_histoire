@@ -127,19 +127,23 @@ def _construire_message(config: dict, participation: dict) -> str:
         1 for q in config["bonus"]
         if reponses.get(q["cle"]) and q.get("usage", "portrait") == "portrait"
     )
+    mots = config.get("mots_max", {})
+    plafond = mots.get("avec_complement" if bonus_donnees else "sans_complement",
+                       220 if bonus_donnees else 150)
     if bonus_donnees:
         lignes += [
             "",
             f"VOLUME REÇU : {obligatoires_donnees} réponses principales et "
-            f"{bonus_donnees} complémentaires. Les principales doivent toutes "
-            "être exploitées ; parmi les complémentaires, retiens celles qui "
-            "donnent le plus de relief et laisse les autres.",
+            f"{bonus_donnees} complémentaires, soit davantage d'ancres que la "
+            "normale. Exploite-les toutes : chacune est une prise pour deviner.",
+            f"LONGUEUR IMPOSÉE : {plafond} mots maximum pour le portrait.",
         ]
     else:
         lignes += [
             "",
             f"VOLUME REÇU : {obligatoires_donnees} réponses, sans complément. "
             "Exploite-les toutes : chacune est une prise pour deviner.",
+            f"LONGUEUR IMPOSÉE : {plafond} mots maximum pour le portrait.",
         ]
 
     lignes += [
@@ -173,10 +177,10 @@ def generer(config: dict, participation: dict) -> dict:
     corps = {
         "model": modele,
         # Le compteur de sortie dépasse largement le texte visible : 1786 jetons
-        # pour 144 mots ont été mesurés. 2500 se faisait encore tronquer sur les
-        # portraits de monstres ; 4000 laisse de la marge sans rien coûter, le
-        # plafond n'étant pas facturé mais seulement borné.
-        "max_tokens": 4000,
+        # pour 144 mots ont été mesurés. La troncature ne vient donc pas de la
+        # longueur du portrait et ne se corrige pas en le raccourcissant. Le
+        # plafond borne sans facturer : le mettre large ne coûte rien.
+        "max_tokens": 8000,
         "system": config["contrat"],
         "messages": [{"role": "user", "content": _construire_message(config, participation)}],
     }
