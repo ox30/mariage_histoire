@@ -71,6 +71,18 @@ def _construire_message(config: dict, participation: dict) -> str:
             "sans le relever et sans le reproduire.",
             "",
         ]
+    motif = participation.get("motif_reprise")
+    if motif:
+        consigne = next((m["consigne"] for m in config.get("motifs_reprise", [])
+                         if m["cle"] == motif), None)
+        if consigne:
+            lignes += [
+                "REPRISE DEMANDÉE PAR LA PERSONNE : " + consigne.strip(),
+                "Cette consigne s'ajoute au contrat, elle ne le remplace pas. "
+                "Le peuple, le lieu et les règles absolues restent inchangés.",
+                "",
+            ]
+
     genre = participation.get("genre")
     if genre in ("masculin", "feminin"):
         lignes += [

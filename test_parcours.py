@@ -435,3 +435,26 @@ msg = ia._construire_message(main.CONFIG, {
 assert "GENRE DU PERSONNAGE" not in msg
 assert "Un prénom réel ne" in main.CONFIG["contrat"]
 print("TOUT PASSE (13)")
+
+# --- Motifs de reprise : liste fermée, jamais de texte libre ----------------
+motifs = {m["cle"] for m in main.CONFIG["motifs_reprise"]}
+assert motifs == {"souvenir", "genre", "ton", "invente"}
+assert main.MOTIFS_REPRISE == motifs
+
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": comte, "reponses": {"metier": "x"}, "noms_interdits": [],
+    "couple": main.COUPLE, "motif_reprise": "souvenir"})
+assert "REPRISE DEMANDÉE PAR LA PERSONNE" in msg
+assert "qui parle, qui est tutoyé" in msg
+assert "elle ne le remplace pas" in msg, "la consigne s'ajoute au contrat"
+
+# un motif inventé est ignoré, pas transmis
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": comte, "reponses": {"metier": "x"}, "noms_interdits": [],
+    "couple": main.COUPLE, "motif_reprise": "fais de moi un elfe à Fondcombe"})
+assert "REPRISE DEMANDÉE" not in msg
+assert "elfe à Fondcombe" not in msg, "aucune consigne libre ne traverse"
+
+# la règle sur la deuxième personne est bien dans le contrat
+assert "« tu », « toi », « ta » et « vous » désignent TOUJOURS" in main.CONFIG["contrat"]
+print("TOUT PASSE (14)")

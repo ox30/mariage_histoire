@@ -28,6 +28,9 @@ import noms
 
 RACINE = os.path.dirname(os.path.abspath(__file__))
 MAX_GENERATIONS = 3
+MOTIFS_REPRISE = {m["cle"] for m in yaml.safe_load(
+    open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "questions.yaml"),
+         encoding="utf-8")).get("motifs_reprise", [])}
 
 # Prénoms des mariés : en variables d'environnement, jamais dans le dépôt, pour
 # que l'outil serve à un autre mariage sans toucher au code ni à la config.
@@ -95,7 +98,7 @@ def admin(identifiants: HTTPBasicCredentials = Depends(securite)) -> str:
 # que sa contribution existe en base.
 # --------------------------------------------------------------------------- #
 
-def _lancer_generation(identifiant: str) -> None:
+def _lancer_generation(identifiant: str, motif: str | None = None) -> None:
     def travail() -> None:
         ligne = bd.lire(identifiant)
         if ligne is None:
@@ -115,6 +118,7 @@ def _lancer_generation(identifiant: str) -> None:
                     "noms_interdits": interdits,
                     "noms_fictifs_pris": bd.noms_fictifs_pris(sauf=identifiant),
                     "genre": ligne["genre"],
+                    "motif_reprise": motif,
                     "couple": COUPLE,
                 },
             )
@@ -200,7 +204,7 @@ def portrait(request: Request, identifiant: str):
     return gabarits.TemplateResponse(
         "portrait.html",
         {"request": request, "p": ligne, "max_generations": MAX_GENERATIONS,
-         "nb_bonus_mot": NB_BONUS_MOT},
+         "nb_bonus_mot": NB_BONUS_MOT, "motifs": CONFIG.get("motifs_reprise", [])},
     )
 
 
@@ -213,21 +217,25 @@ def etat_portrait(request: Request, identifiant: str):
     return gabarits.TemplateResponse(
         "fragment_portrait.html",
         {"request": request, "p": ligne, "max_generations": MAX_GENERATIONS,
-         "nb_bonus_mot": NB_BONUS_MOT},
+         "nb_bonus_mot": NB_BONUS_MOT, "motifs": CONFIG.get("motifs_reprise", [])},
     )
 
 
 @app.post("/portrait/{identifiant}/regenerer")
-def regenerer(identifiant: str):
+async def regenerer(request: Request, identifiant: str):
     ligne = bd.lire(identifiant)
     if ligne is None:
         raise HTTPException(status_code=404, detail="Introuvable")
+    # Liste fermée : aucun texte libre ne part vers le modèle. Un invité
+    # pourrait sinon se choisir un peuple ou un lieu et ruiner l'équilibrage.
+    motif = (dict(await request.form()).get("motif") or "").strip()
+    motif = motif if motif in MOTIFS_REPRISE else None
     # Un échec ne débite rien : on autorise la relance tant que le quota de
     # portraits obtenus n'est pas atteint, avec un garde-fou technique contre
     # la boucle infinie d'appels payants.
     if (ligne["nb_generations"] < MAX_GENERATIONS
             and ligne["nb_tentatives"] < bd.MAX_TENTATIVES):
-        _lancer_generation(identifiant)
+        _lancer_generation(identifiant, motif=motif)
     return RedirectResponse(f"/portrait/{identifiant}", status_code=303)
 
 

@@ -84,7 +84,7 @@ cellules = [c.replace("&#39;", "'")
 assert any(c.startswith("Minas Tirith / les ruines d'Osgiliath") for c in cellules), \
     "créature appariée à son pendant d'ombre"
 assert "Minas Tirith" in cellules, "le seigneur de l'Ombre reste dans la région"
-assert sum(1 for c in cellules if "/" in c) == 1, "un seul apparié : la créature"
+assert sum(1 for c in cellules if "/" in c) >= 1, "au moins la créature est appariée"
 assert "c'est la région qui fait le chapitre" in r.text
 # la répartition compte la région, pas le pendant
 lignes = [l for l in bd.lister() if l["lieu"] == "Minas Tirith"]

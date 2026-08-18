@@ -229,6 +229,32 @@ bonus:
     limite: 80
 
 
+# Motifs de reprise proposés à l'invité qui demande une réécriture. Liste
+# FERMÉE : aucune saisie libre n'est transmise au modèle, sinon un invité
+# pourrait choisir son peuple ou son lieu et ruiner l'équilibrage.
+motifs_reprise:
+  - cle: souvenir
+    libelle: Mon souvenir a été mal compris
+    consigne: >
+      La reprise précédente a mal interprété le souvenir. Relis-le avec soin :
+      qui parle, qui est tutoyé, à qui arrive quoi. Le personnage est l'auteur
+      du souvenir, pas la personne qu'il y désigne.
+  - cle: genre
+    libelle: Ce n'est pas le bon genre
+    consigne: >
+      Le genre du personnage était faux. Reprends-le en respectant strictement
+      le genre indiqué, nom fictif compris.
+  - cle: ton
+    libelle: Le ton ne me ressemble pas
+    consigne: >
+      Change de registre : garde les mêmes ancres, mais un autre angle
+      d'attaque, un autre rythme, une autre humeur.
+  - cle: invente
+    libelle: Trop de choses inventées
+    consigne: >
+      Serre-toi aux réponses données. Réduis les détails décoratifs que rien
+      dans les réponses ne justifie, et fais ressortir les ancres réelles.
+
 # --- Contrat de style transmis au modèle ------------------------------------
 
 contrat: |
@@ -262,6 +288,13 @@ contrat: |
      ce qu'il fréquente, ce qu'il tait, à qui il rend des comptes.
   6. Le souvenir avec les mariés doit être transposé, pas recopié : il devient
      une scène vécue en Terre du Milieu.
+     **Attention à la deuxième personne.** Les invités écrivent souvent leur
+     souvenir en s'adressant directement aux mariés : « je t'ai tenue dans mes
+     bras », « tu es tombé en te cassant le poignet », « étant ta grand-maman ».
+     Dans ces phrases, « tu », « toi », « ta » et « vous » désignent TOUJOURS
+     la ou les personnes indiquées comme présentes dans le souvenir — jamais
+     l'auteur. Celui qui écrit est le personnage ; celui qu'il tutoie est un
+     fiancé. Confondre les deux produit un portrait faux.
      **Deux informations distinctes ne doivent jamais être confondues** : les
      personnes présentes dans le souvenir, et le lien de parenté ou d'amitié.
      Quelqu'un peut partager un souvenir avec les deux fiancés tout en n'étant

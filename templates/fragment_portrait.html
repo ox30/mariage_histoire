@@ -48,11 +48,30 @@
 
   {% if p.nb_generations < max_generations %}
     <form method="post" action="/portrait/{{ p.uuid }}/regenerer">
+      <input type="hidden" name="motif" id="champ-motif" value="">
+      <p class="discret" style="margin:1.4rem 0 0.5rem">
+        Quelque chose ne va pas ? (facultatif)
+      </p>
+      {% for m in motifs %}
+        <button type="button" class="choix motif" data-valeur="{{ m.cle }}">{{ m.libelle }}</button>
+      {% endfor %}
       <button class="action sobre" type="submit">
         Réécrivez-moi ça
         ({{ max_generations - p.nb_generations }} restant{{ "s" if max_generations - p.nb_generations > 1 else "" }})
       </button>
     </form>
+    <script>
+    document.querySelectorAll(".motif").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var deja = b.classList.contains("retenu");
+        document.querySelectorAll(".motif").forEach(function (x) {
+          x.classList.remove("retenu");
+        });
+        if (!deja) { b.classList.add("retenu"); }
+        document.getElementById("champ-motif").value = deja ? "" : b.dataset.valeur;
+      });
+    });
+    </script>
   {% else %}
     <p class="discret">Vous avez épuisé vos réécritures. Cette chronique est la vôtre.</p>
   {% endif %}
