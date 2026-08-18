@@ -373,3 +373,15 @@ msg = ia._construire_message(main.CONFIG, {
     "lieu": comte, "reponses": _json.loads(stocke), "noms_interdits": [], "couple": main.COUPLE})
 assert "Tout le bonheur du monde" not in msg, "et n'atteint toujours pas le modèle"
 print("TOUT PASSE (10)")
+
+# --- Le contrôle de noms ne retient que les occurrences capitalisées --------
+# Cas réel du 18 août : « le nouveau-né tout juste arrivé au monde » signalait
+# une fuite du prénom « Juste ».
+assert ia.verifier_noms("le nouveau-né tout juste arrivé au monde", ["Juste"]) == []
+assert ia.verifier_noms("il croisa Juste au détour", ["Juste"]) == ["Juste"]
+assert ia.verifier_noms("il ramassa une pierre polie", ["Pierre"]) == []
+assert ia.verifier_noms("elle salua Pierre et repartit", ["Pierre"]) == ["Pierre"]
+assert ia.verifier_noms("Juste avant l'aube, il partit", ["Juste"]) == [], "début de phrase"
+assert ia.verifier_noms("il vit Jean-Pierre au loin", ["Jean-Pierre"]) == ["Jean-Pierre"]
+assert ia.verifier_noms("la scène avec Delphine à ses côtés", ["Delphine"]) == ["Delphine"]
+print("TOUT PASSE (11)")

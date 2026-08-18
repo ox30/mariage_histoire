@@ -31,8 +31,20 @@ def verifier_noms(texte: str, noms_interdits: list[str]) -> list[str]:
 
     On ne corrige pas silencieusement : on signale, et l'humain tranche à la
     relecture. Un remplacement automatique produirait des phrases cassées.
+
+    Seules les occurrences **capitalisées** comptent : en français un nom propre
+    porte toujours la majuscule, alors que les prénoms qui sont aussi des mots
+    courants — Juste, Pierre, Rose, Olivier — apparaissent en minuscules dans
+    leur sens ordinaire. « le nouveau-né tout juste arrivé » n'est pas une
+    fuite ; « il croisa Juste » en est une. Le premier mot d'une phrase est
+    ignoré : sa majuscule ne prouve rien.
     """
-    mots_texte = {_normaliser(m) for m in re.findall(r"\w+", texte)}
+    mots_texte = set()
+    for phrase in re.split(r"(?<=[.!?\u2026\u00bb])\s+", texte):
+        mots = re.findall(r"\w+", phrase)
+        for mot in mots[1:]:
+            if mot[:1].isupper():
+                mots_texte.add(_normaliser(mot))
     fuites = []
     for nom in noms_interdits:
         # « Jean-Pierre » doit être cherché en entier ET partie par partie :
