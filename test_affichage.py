@@ -56,3 +56,12 @@ assert "on a raté le dernier train" in r.text, "souvenir brut à la révélatio
 assert "plein de belles choses" in r.text, "vœu brut à la révélation"
 assert "Ce qu'il ou elle vous souhaite" in r.text
 print("TOUT PASSE (bis)")
+
+# --- Initiales affichées au palier d'indice ---------------------------------
+uid3 = bd.creer("jean-pierre", "gagnebin", {"souvenir": "s"}, main.LIBELLES_LIEUX)
+bd.enregistrer_portrait(uid3, {"nom_fictif": "Skarn", "peuple": "orque",
+                               "portrait": "p", "indice": "i", "fuites_noms": []})
+r = c.get("/deviner", headers=auth)
+assert "J.-P. G." in r.text, "initiales d'un prénom composé"
+assert "Jean-Pierre Gagnebin" in r.text, "nom capitalisé à la révélation"
+print("TOUT PASSE (ter)")

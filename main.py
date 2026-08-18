@@ -24,6 +24,7 @@ from fastapi.templating import Jinja2Templates
 
 import base_donnees as bd
 import ia
+import noms
 
 RACINE = os.path.dirname(os.path.abspath(__file__))
 MAX_GENERATIONS = 3
@@ -294,6 +295,7 @@ def deviner(request: Request, _: str = Depends(admin)):
         # Le souvenir et le vœu sont montrés tels quels : la voix de la
         # personne vaut mieux que sa transposition, une fois qu'on l'a devinée.
         ligne["reponses"] = json.loads(p["reponses_json"])
+        ligne["initiales"] = noms.initiales(p["prenom"], p["nom"])
         par_lieu.setdefault(p["lieu"], []).append(ligne)
     total = sum(len(v) for v in par_lieu.values())
     return gabarits.TemplateResponse(

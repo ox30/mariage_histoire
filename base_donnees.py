@@ -11,6 +11,8 @@ import sqlite3
 import uuid
 from datetime import datetime, timezone
 
+import noms
+
 DOSSIER = "/data" if os.path.isdir("/data") else "."
 CHEMIN = os.path.join(DOSSIER, "banc-essai.db")
 
@@ -96,6 +98,9 @@ def assigner_lieu(cnx: sqlite3.Connection, lieux: list[str]) -> str:
 
 def creer(prenom: str, nom: str, reponses: dict, lieux: list[str],
           etat: str = "en_attente") -> str:
+    # Capitalisé une fois, à l'entrée : ce qui est stocké est ce qui sera montré
+    # aux mariés, et c'est aussi ce qui alimente la liste des noms interdits.
+    prenom, nom = noms.capitaliser(prenom), noms.capitaliser(nom)
     identifiant = str(uuid.uuid4())
     horodatage = maintenant()
     with connexion() as cnx:

@@ -385,3 +385,27 @@ assert ia.verifier_noms("Juste avant l'aube, il partit", ["Juste"]) == [], "déb
 assert ia.verifier_noms("il vit Jean-Pierre au loin", ["Jean-Pierre"]) == ["Jean-Pierre"]
 assert ia.verifier_noms("la scène avec Delphine à ses côtés", ["Delphine"]) == ["Delphine"]
 print("TOUT PASSE (11)")
+
+# --- Capitalisation des noms saisis et initiales ----------------------------
+import noms as mod_noms
+assert mod_noms.capitaliser("jean-pierre") == "Jean-Pierre"
+assert mod_noms.capitaliser("GAGNEBIN") == "Gagnebin"
+assert mod_noms.capitaliser("  joël   sandoz ") == "Joël Sandoz"
+assert mod_noms.capitaliser("de rham") == "de Rham", "la particule reste minuscule"
+assert mod_noms.capitaliser("van der meer") == "van der Meer"
+assert mod_noms.capitaliser("d'alembert") == "d'Alembert"
+assert mod_noms.capitaliser("le roy") == "Le Roy", "Le se capitalise en patronyme"
+assert mod_noms.capitaliser("") == ""
+
+assert mod_noms.initiales("jean-pierre", "gagnebin") == "J.-P. G."
+assert mod_noms.initiales("marie-josé", "de rham") == "M.-J. R."
+assert mod_noms.initiales("anne", "van der meer") == "A. M."
+assert mod_noms.initiales("jean", "d'alembert") == "J. A."
+assert mod_noms.initiales("anne-marie", "von gunten") == "A.-M. G."
+
+# la capitalisation a lieu à la création, une seule fois
+uid10 = bd.creer("jean-pierre", "GAGNEBIN", {"metier": "x"}, main.LIBELLES_LIEUX)
+ligne = bd.lire(uid10)
+assert ligne["prenom"] == "Jean-Pierre" and ligne["nom"] == "Gagnebin"
+assert "Jean-Pierre" in bd.tous_les_prenoms() and "Gagnebin" in bd.tous_les_prenoms()
+print("TOUT PASSE (12)")
