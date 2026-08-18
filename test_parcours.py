@@ -86,7 +86,8 @@ msg = ia._construire_message(main.CONFIG, {
     "lieu": "Isengard", "reponses": _json.loads(bd.lire(uid2)["reponses_json"]),
     "noms_interdits": ["Delphine"], "couple": main.COUPLE})
 assert "la mariée s'appelle Delphine" in msg
-assert "Ce souvenir, c'est avec… → Delphine" in msg
+assert "DANS CE SOUVENIR (et rien d'autre) → Delphine" in msg
+assert "ne dit rien du lien de parenté" in msg
 assert "jamais écrire" in msg
 print("TOUT PASSE (2)")
 
@@ -243,3 +244,57 @@ for peuple in ("ent", "orque", "Variag de Khand", "troll", "Corsaire d'Umbar"):
     assert "→ " + peuple in contrat, peuple
 assert "jamais humiliant" in contrat
 print("TOUT PASSE (6)")
+
+# --- Un échec technique ne débite pas le quota de l'invité ------------------
+uid7 = bd.creer("Gil", "Test", {"metier": "x"}, main.CONFIG["lieux"])
+for _ in range(4):
+    bd.enregistrer_echec(uid7, "529 overloaded_error")
+ligne = bd.lire(uid7)
+assert ligne["nb_generations"] == 0, "aucun crédit consommé par un échec"
+assert ligne["nb_tentatives"] == 4, ligne["nb_tentatives"]
+
+# la relance reste possible après plusieurs échecs
+r = c2.get(f"/portrait/{uid7}")
+assert "Réessayer" in r.text and "rien coûté" in r.text
+
+# un succès, lui, débite bien
+bd.enregistrer_portrait(uid7, {"nom_fictif": "N", "peuple": "ent", "portrait": "p",
+                               "indice": "i", "fuites_noms": []})
+assert bd.lire(uid7)["nb_generations"] == 1
+assert bd.lire(uid7)["nb_tentatives"] == 5
+
+# garde-fou technique : au-delà de MAX_TENTATIVES, plus aucun appel
+for _ in range(bd.MAX_TENTATIVES):
+    bd.enregistrer_echec(uid7, "529")
+avant = bd.lire(uid7)["nb_tentatives"]
+c2.post(f"/portrait/{uid7}/regenerer", follow_redirects=False)
+import time as _t; _t.sleep(0.4)
+assert bd.lire(uid7)["nb_tentatives"] == avant, "aucun appel au-delà du garde-fou"
+print("TOUT PASSE (7)")
+
+# --- Un échec de génération ne consomme aucun crédit ------------------------
+uid7 = bd.creer("Gil", "Test", {"metier": "x"}, main.CONFIG["lieux"])
+for _ in range(5):
+    bd.enregistrer_echec(uid7, "HTTP 529 — overloaded_error")
+assert bd.lire(uid7)["nb_generations"] == 0, "cinq pannes, zéro crédit débité"
+assert bd.lire(uid7)["etat"] == "echouee"
+# le portrait obtenu, lui, compte
+bd.enregistrer_portrait(uid7, {"nom_fictif": "N", "peuple": "nain", "portrait": "p",
+                               "indice": "i", "fuites_noms": []})
+assert bd.lire(uid7)["nb_generations"] == 1
+# et les réponses ont survécu à tout
+assert "x" in bd.lire(uid7)["reponses_json"]
+print("TOUT PASSE (7)")
+
+# --- Le lien déclaré ne doit pas être étendu ---------------------------------
+otho = {"metier": "Dessinateur", "attachement": "Une bonne table entre amis",
+        "defaut": "Je veux tout contrôler", "objet": "Mon décapsuleur",
+        "allegeance": "La Lumière", "souvenir_avec": "Les deux",
+        "souvenir": "un test", "lien": "Famille de Delphine"}
+msg = ia._construire_message(main.CONFIG, {
+    "lieu": "Les Havres Gris", "reponses": otho,
+    "noms_interdits": [], "couple": main.COUPLE})
+assert "ne dit rien du lien de parenté" in msg, "le sélecteur est désambiguïsé"
+assert "Famille de Delphine" in msg
+assert "N'étends jamais un lien" in main.CONFIG["contrat"]
+print("TOUT PASSE (7)")

@@ -127,6 +127,7 @@ obligatoires:
     type: texte_long
     prealable:
       cle: souvenir_avec
+      intitule_modele: "Personnes présentes DANS CE SOUVENIR (et rien d'autre)"
       question: Ce souvenir, c'est avec…
       options:
         - "{mariee}"
@@ -229,13 +230,32 @@ contrat: |
      ce qu'il fréquente, ce qu'il tait, à qui il rend des comptes.
   6. Le souvenir avec les mariés doit être transposé, pas recopié : il devient
      une scène vécue en Terre du Milieu.
+     **Deux informations distinctes ne doivent jamais être confondues** : les
+     personnes présentes dans le souvenir, et le lien de parenté ou d'amitié.
+     Quelqu'un peut partager un souvenir avec les deux fiancés tout en n'étant
+     apparenté qu'à un seul. Une scène vécue à deux ne prouve rien sur la
+     parenté : n'étends jamais un lien de l'un à l'autre.
   7. Le lien avec les mariés a sa place dans le portrait, mais transposé.
      N'emploie aucun terme du monde réel — ni beau-frère, ni belle-sœur, ni
      cousin, ni collègue, ni voisin : ces mots-là appartiennent à l'indice.
      Dis la même chose avec les mots de la Terre du Milieu : « celle qui devint
      sœur de son épouse », « ceux de sa parenté », « ceux avec qui il partage
      l'établi ».
-  8. Utilise toutes les réponses données, mais jamais dans le même ordre.
+     **N'étends jamais un lien au-delà de ce qui est déclaré.** Deux réponses
+     distinctes ne doivent pas être fusionnées : « avec qui » qualifie la scène
+     du souvenir, « comment connais-tu les mariés » qualifie le lien. Quelqu'un
+     qui déclare un souvenir avec les deux mais une parenté avec un seul n'est
+     apparenté qu'à celui-là. Dans le doute, tais le lien plutôt que de
+     l'inventer : une parenté fausse se remarque immédiatement dans une
+     famille.
+  8. **« Ce souvenir, c'est avec… » désigne qui était présent dans la scène, et
+     rien d'autre.** Ce n'est PAS l'étendue du lien de parenté. Quelqu'un peut
+     avoir vécu un souvenir avec les deux fiancés tout en n'étant apparenté
+     qu'à un seul d'entre eux. N'étends jamais la parenté au-delà de ce
+     qu'indique « comment connais-tu les mariés » : si la réponse ne nomme
+     qu'un des deux, le personnage n'est de la parenté que de celui-là, même
+     si la scène réunit tout le monde.
+  9. Utilise toutes les réponses données, mais jamais dans le même ordre.
      Chaque réponse est une prise pour deviner : en écarter une, c'est retirer
      une chance aux mariés.
      Ne commence ni ne termine jamais deux portraits de la même façon. N'ouvre
@@ -244,7 +264,7 @@ contrat: |
      Entre par le personnage : un geste en cours, une habitude, une réputation
      qui court, une chose qu'on lui reproche. Le nom du personnage n'a pas à
      figurer dans la première phrase. Ne finis pas sur une formule de vœux.
-  9. Français, à la troisième personne, ton de chronique.
+  10. Français, à la troisième personne, ton de chronique.
      150 mots maximum, et cette limite est ferme. Un portrait de 200 mots n'est
      pas plus riche, il est plus long : à la dixième lecture d'affilée, c'est
      la concision qui tient. Coupe les adjectifs avant de couper les ancres.

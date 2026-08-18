@@ -86,7 +86,10 @@ def _construire_message(config: dict, participation: dict) -> str:
                 if usage_p != "chapitre" and usage_p != "revelation":
                     cible_p = pour_indice if usage_p == "indice" else pour_portrait
                     cible_p.append(
-                        f"- {prealable['question']} → {reponses[prealable['cle']]}"
+                        f"- {prealable.get('intitule_modele', prealable['question'])}"
+                        f" → {reponses[prealable['cle']]}"
+                        " (qui figure dans la scène du souvenir ; ne dit rien"
+                        " du lien de parenté)"
                     )
             valeur = reponses.get(q["cle"])
             if valeur and not ignoree:
